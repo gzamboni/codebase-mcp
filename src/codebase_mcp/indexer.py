@@ -6,13 +6,10 @@ from openai import OpenAI
 from qdrant_client.models import PointStruct
 
 from .store import (
-    VECTOR_SIZE,
     add_repo,
     ensure_collection,
     get_client,
     get_repo_id,
-    is_indexed,
-    load_config,
 )
 
 INDEXED_EXTENSIONS = {
