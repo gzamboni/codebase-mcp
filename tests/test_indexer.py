@@ -67,11 +67,6 @@ def isolated_store(tmp_path_factory, monkeypatch):
     # Use a separate tmp_path for the store to avoid conflicts with fixture_repo
     store_dir = tmp_path_factory.mktemp("codebase_mcp_store")
     monkeypatch.setenv("CODEBASE_MCP_DATA_DIR", str(store_dir))
-    import importlib
-    import codebase_mcp.store as store_mod
-    import codebase_mcp.indexer as indexer_mod
-    importlib.reload(store_mod)
-    importlib.reload(indexer_mod)
 
 
 def _fake_embedding(size: int = 1536) -> list[float]:
@@ -93,7 +88,7 @@ def _mock_openai():
     return mock
 
 
-def test_index_repo_returns_chunk_count(fixture_repo, tmp_path):
+def test_index_repo_returns_chunk_count(fixture_repo):
     from codebase_mcp.indexer import index_repo, iter_files, chunk_file
 
     # Count expected chunks
@@ -110,7 +105,7 @@ def test_index_repo_returns_chunk_count(fixture_repo, tmp_path):
     assert count == expected
 
 
-def test_index_repo_saves_to_config(fixture_repo, tmp_path):
+def test_index_repo_saves_to_config(fixture_repo):
     from codebase_mcp.indexer import index_repo
     from codebase_mcp.store import is_indexed
 
@@ -121,9 +116,9 @@ def test_index_repo_saves_to_config(fixture_repo, tmp_path):
     assert is_indexed(str(fixture_repo.resolve()))
 
 
-def test_index_repo_replaces_existing(fixture_repo, tmp_path):
+def test_index_repo_replaces_existing(fixture_repo):
     from codebase_mcp.indexer import index_repo
-    from codebase_mcp.store import load_config
+    from codebase_mcp.store import get_client, get_repo_id, load_config
 
     with patch("codebase_mcp.indexer.OpenAI") as MockOpenAI:
         MockOpenAI.return_value = _mock_openai()
@@ -131,5 +126,13 @@ def test_index_repo_replaces_existing(fixture_repo, tmp_path):
         second_count = index_repo(str(fixture_repo))
 
     assert first_count == second_count
+
+    # Verify collection was replaced, not doubled
+    abs_path = str(fixture_repo.resolve())
+    repo_id = get_repo_id(abs_path)
+    client = get_client()
+    results = client.scroll(collection_name=repo_id, limit=1000)[0]
+    assert len(results) == second_count
+
     config = load_config()
-    assert str(fixture_repo.resolve()) in config
+    assert abs_path in config
