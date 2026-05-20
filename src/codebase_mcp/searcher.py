@@ -2,19 +2,12 @@ from pathlib import Path
 
 from openai import OpenAI
 
-from .store import get_all_repos, get_client, get_repo_id, load_config
+from .store import get_client, load_config
 
 TOP_K = 8
 
 
 def search(query: str, repo_path: str | None = None) -> str:
-    openai_client = OpenAI()
-    response = openai_client.embeddings.create(
-        model="text-embedding-3-small",
-        input=[query],
-    )
-    query_vector = response.data[0].embedding
-
     config = load_config()
 
     if repo_path:
@@ -26,6 +19,13 @@ def search(query: str, repo_path: str | None = None) -> str:
         if not config:
             return "No repos indexed. Run: codebase-mcp index /path/to/repo"
         repo_ids = [v["repo_id"] for v in config.values()]
+
+    openai_client = OpenAI()
+    response = openai_client.embeddings.create(
+        model="text-embedding-3-small",
+        input=[query],
+    )
+    query_vector = response.data[0].embedding
 
     qdrant = get_client()
     all_results = []
