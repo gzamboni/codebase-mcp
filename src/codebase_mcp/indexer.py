@@ -11,10 +11,12 @@ from .store import (
     get_client,
     get_repo_id,
 )
+from .ast_chunker import chunk_file_ast
 
 INDEXED_EXTENSIONS = {
     ".py", ".ts", ".tsx", ".js", ".jsx", ".go", ".rs", ".rb",
     ".java", ".cpp", ".c", ".h", ".md", ".yaml", ".yml", ".toml", ".json",
+    ".tf",
 }
 SKIP_DIRS = {
     ".git", "node_modules", "__pycache__", "dist", "build",
@@ -36,7 +38,7 @@ def iter_files(repo_path: Path):
                 yield filepath
 
 
-def chunk_file(content: str, filepath: str, repo_path: str) -> list[dict]:
+def _chunk_file_lines(content: str, filepath: str, repo_path: str) -> list[dict]:
     lines = content.splitlines()
     if len(lines) < MIN_LINES_FOR_SPLIT:
         return [{
@@ -62,6 +64,14 @@ def chunk_file(content: str, filepath: str, repo_path: str) -> list[dict]:
             "repo_path": repo_path,
         })
     return chunks
+
+
+def chunk_file(content: str, filepath: str, repo_path: str) -> list[dict]:
+    try:
+        chunks = chunk_file_ast(content, filepath, repo_path)
+    except Exception:
+        chunks = None
+    return chunks if chunks else _chunk_file_lines(content, filepath, repo_path)
 
 
 def _embed_batch(texts: list[str], client: OpenAI) -> list[list[float]]:
