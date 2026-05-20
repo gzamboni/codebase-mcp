@@ -1,5 +1,12 @@
 import pytest
 from pathlib import Path
+from codebase_mcp import ast_chunker
+
+@pytest.fixture(autouse=True)
+def clear_parser_cache():
+    ast_chunker._parsers.clear()
+    yield
+    ast_chunker._parsers.clear()
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────
 

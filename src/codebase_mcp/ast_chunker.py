@@ -69,7 +69,7 @@ def _get_parser(lang_name: str):
         _parsers[lang_name] = parser
         return parser
 
-    except Exception:
+    except ImportError:
         _parsers[lang_name] = None
         return None
 
