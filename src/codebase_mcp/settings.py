@@ -10,6 +10,7 @@ KNOWN_MODELS: dict[str, int] = {
 }
 
 _FIELDS = {"embedding_model", "vector_size", "api_key", "api_base"}
+_OPTIONAL_FIELDS = {"api_key", "api_base"}
 
 
 @dataclass
@@ -26,18 +27,16 @@ def _settings_path():
 
 def load_settings() -> Settings:
     path = _settings_path()
-    if not path.exists():
-        return Settings()
     try:
         data = json.loads(path.read_text())
-    except json.JSONDecodeError:
+    except (OSError, json.JSONDecodeError):
         return Settings()
     return Settings(**{k: v for k, v in data.items() if k in _FIELDS})
 
 
 def save_settings(s: Settings) -> None:
     _data_dir().mkdir(parents=True, exist_ok=True)
-    data = {k: v for k, v in asdict(s).items() if v is not None}
+    data = {k: v for k, v in asdict(s).items() if k not in _OPTIONAL_FIELDS or v is not None}
     _settings_path().write_text(json.dumps(data, indent=2))
 
 

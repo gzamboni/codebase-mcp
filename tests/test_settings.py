@@ -35,15 +35,15 @@ def test_save_and_load_round_trip():
     assert loaded.api_base == "http://localhost:11434/v1"
 
 
-def test_get_settings_ignores_unknown_fields(tmp_path):
-    settings_path = tmp_path / "settings.json"
-    settings_path.write_text(
-        json.dumps(
-            {"embedding_model": "text-embedding-3-large", "vector_size": 3072, "mystery": "value"}
-        )
-    )
+def test_get_settings_ignores_unknown_fields():
+    from codebase_mcp.settings import Settings, _settings_path, get_settings, save_settings
 
-    from codebase_mcp.settings import get_settings
+    save_settings(Settings(embedding_model="text-embedding-3-large", vector_size=3072))
+    # inject an unknown key directly into the file
+    path = _settings_path()
+    data = json.loads(path.read_text())
+    data["mystery"] = "value"
+    path.write_text(json.dumps(data))
 
     s = get_settings()
     assert s.embedding_model == "text-embedding-3-large"
