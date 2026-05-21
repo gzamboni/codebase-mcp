@@ -1,4 +1,5 @@
 import asyncio
+from unittest.mock import patch
 
 from codebase_mcp.server import mcp
 
@@ -33,3 +34,17 @@ def test_get_file_outline_missing_file():
     fn = _get_tool("get_file_outline")
     result = fn(file_path="/nonexistent/path/foo.py")
     assert "not found" in result.lower() or "File not found" in result
+
+
+def test_search_symbols_no_repos():
+    fn = _get_tool("search_symbols")
+    with patch("codebase_mcp.server.get_all_repos", return_value={}):
+        result = fn(name="anything")
+    assert "No repos" in result
+
+
+def test_search_symbols_returns_string():
+    fn = _get_tool("search_symbols")
+    with patch("codebase_mcp.server.get_all_repos", return_value={}):
+        result = fn(name="foo")
+    assert isinstance(result, str)
