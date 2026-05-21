@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-MAX_CHUNK_CHARS = 32_000  # mirrors indexer.py constant
+MAX_CHUNK_CHARS = 16_000  # 8192 token limit; dense code ~2 chars/token → 16k chars safe
 
 SEMANTIC_NODES: dict[str, set[str]] = {
     "python": {"function_definition", "decorated_definition"},

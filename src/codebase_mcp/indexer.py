@@ -50,7 +50,7 @@ CHUNK_LINES = 100
 OVERLAP_LINES = 20
 MIN_LINES_FOR_SPLIT = 20
 BATCH_SIZE = 100
-MAX_CHUNK_CHARS = 20_000  # 8191 token limit; code tokenizes at ~2.5 chars/token → 20k chars safe
+MAX_CHUNK_CHARS = 16_000  # 8192 token limit; dense code ~2 chars/token → 16k chars safe
 
 
 def iter_files(repo_path: Path):
@@ -133,6 +133,8 @@ def index_repo(repo_path: str) -> int:
             continue
         rel_path = str(filepath.relative_to(abs_path))
         all_chunks.extend(chunk_file(content, rel_path, abs_path))
+    for c in all_chunks:
+        c["text"] = c["text"][:MAX_CHUNK_CHARS]
     all_chunks = [c for c in all_chunks if c["text"].strip()]
 
     ensure_collection(qdrant, repo_id, vector_size=settings.vector_size)
