@@ -48,3 +48,28 @@ def test_search_symbols_returns_string():
     with patch("codebase_mcp.server.get_all_repos", return_value={}):
         result = fn(name="foo")
     assert isinstance(result, str)
+
+
+def test_find_todos_no_repos():
+    fn = _get_tool("find_todos")
+    with patch("codebase_mcp.server.get_all_repos", return_value={}):
+        result = fn()
+    assert "No repos" in result
+
+
+def test_find_todos_finds_comment(tmp_path):
+    src = tmp_path / "app.py"
+    src.write_text("x = 1  # TODO: fix this\ny = 2\n# FIXME broken\n")
+    fn = _get_tool("find_todos")
+    with patch(
+        "codebase_mcp.server.get_all_repos",
+        return_value={
+            str(tmp_path): {
+                "repo_id": "abc",
+                "last_indexed": "2024-01-01T00:00:00Z",
+                "chunk_count": 1,
+            }
+        },
+    ):
+        result = fn(repo_path=str(tmp_path))
+    assert "TODO" in result or "FIXME" in result

@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 from fastmcp import FastMCP
@@ -86,6 +87,49 @@ def search_symbols(name: str, repo_path: str | None = None) -> str:
     if not results:
         return f"No symbols matching '{name}' found."
     return f"Symbols matching '{name}':\n" + "\n".join(results)
+
+
+_TODO_PATTERN = re.compile(r"#\s*(TODO|FIXME|HACK|BUG|NOTE|XXX)\b[:\s]*(.*)", re.IGNORECASE)
+
+
+@mcp.tool()
+def find_todos(repo_path: str | None = None) -> str:
+    """Find TODO, FIXME, HACK, BUG, NOTE comments in indexed repos.
+
+    Args:
+        repo_path: Absolute path to a specific repo. Omit to search all indexed repos.
+    """
+    from .indexer import iter_files
+
+    config = get_all_repos()
+    if not config:
+        return "No repos indexed. Run: codebase-mcp index /path/to/repo"
+
+    if repo_path:
+        abs_path = str(Path(repo_path).resolve())
+        candidates = {abs_path: config[abs_path]} if abs_path in config else {}
+    else:
+        candidates = config
+
+    if not candidates:
+        return f"Repo not indexed: {repo_path}"
+
+    found: list[str] = []
+    for path in candidates:
+        for filepath in iter_files(Path(path)):
+            try:
+                text = filepath.read_text(encoding="utf-8", errors="ignore")
+            except Exception:
+                continue
+            for lineno, line in enumerate(text.splitlines(), 1):
+                m = _TODO_PATTERN.search(line)
+                if m:
+                    rel = str(filepath.relative_to(path))
+                    found.append(f"  [{m.group(1).upper()}] {rel}:{lineno}  {m.group(2).strip()}")
+
+    if not found:
+        return "No TODO/FIXME/HACK/BUG/NOTE comments found."
+    return f"Found {len(found)} items:\n" + "\n".join(found)
 
 
 @mcp.tool()
