@@ -133,6 +133,7 @@ def index_repo(repo_path: str) -> int:
             continue
         rel_path = str(filepath.relative_to(abs_path))
         all_chunks.extend(chunk_file(content, rel_path, abs_path))
+    all_chunks = [c for c in all_chunks if c["text"].strip()]
 
     ensure_collection(qdrant, repo_id, vector_size=settings.vector_size)
 
