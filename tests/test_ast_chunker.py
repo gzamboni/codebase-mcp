@@ -216,3 +216,26 @@ def test_chunk_file_falls_back_to_lines():
     chunks = chunk_file(content, "config.yaml", "/repo")
     assert len(chunks) >= 1
     assert "node_type" not in chunks[0]
+
+
+def test_chunk_has_symbol_name():
+    from codebase_mcp.ast_chunker import chunk_file_ast
+
+    content = "def my_function(x):\n    return x + 1\n"
+    chunks = chunk_file_ast(content, "foo.py", "/repo")
+    assert chunks is not None
+    assert len(chunks) == 1
+    assert chunks[0]["symbol_name"] == "my_function"
+
+
+def test_chunk_symbol_name_none_for_anon():
+    # HCL block nodes may not always have an identifier child — symbol_name can be None
+    # But for Python functions it must always be set
+    from codebase_mcp.ast_chunker import chunk_file_ast
+
+    content = "def alpha():\n    pass\ndef beta():\n    pass\n"
+    chunks = chunk_file_ast(content, "foo.py", "/repo")
+    assert chunks is not None
+    names = [c["symbol_name"] for c in chunks]
+    assert "alpha" in names
+    assert "beta" in names

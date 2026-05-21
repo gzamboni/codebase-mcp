@@ -30,6 +30,13 @@ EXT_TO_LANG: dict[str, str] = {
 _parsers: dict[str, object] = {}
 
 
+def _extract_symbol_name(node, content: str) -> str | None:
+    for child in node.children:
+        if child.type in ("identifier", "property_identifier", "field_identifier", "name"):
+            return content[child.start_byte : child.end_byte]
+    return None
+
+
 def _get_parser(lang_name: str):
     if lang_name in _parsers:
         return _parsers[lang_name]
@@ -109,6 +116,7 @@ def chunk_file_ast(content: str, filepath: str, repo_path: str) -> list[dict] | 
                     "end_line": node.end_point[0] + 1,
                     "repo_path": repo_path,
                     "node_type": node.type,
+                    "symbol_name": _extract_symbol_name(node, content),
                 }
             )
             return  # don't descend — avoids nested method-inside-class duplication
