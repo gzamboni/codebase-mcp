@@ -99,3 +99,97 @@ def test_remove_nonexistent_fails(runner, tmp_path):
 
     result = runner.invoke(main, ["remove", str(tmp_path / "ghost")])
     assert result.exit_code != 0
+
+
+def test_config_list_defaults(runner):
+    from codebase_mcp.cli import main
+
+    result = runner.invoke(main, ["config", "list"])
+    assert result.exit_code == 0
+    assert "text-embedding-3-small" in result.output
+    assert "1536" in result.output
+
+
+def test_config_set_known_model(runner):
+    from codebase_mcp.cli import main
+    from codebase_mcp.settings import get_settings
+
+    result = runner.invoke(main, ["config", "set", "embedding-model", "text-embedding-3-large"])
+    assert result.exit_code == 0
+    s = get_settings()
+    assert s.embedding_model == "text-embedding-3-large"
+    assert s.vector_size == 3072
+
+
+def test_config_set_unknown_model_without_vector_size_fails(runner):
+    from codebase_mcp.cli import main
+
+    result = runner.invoke(main, ["config", "set", "embedding-model", "nomic-embed-text"])
+    assert result.exit_code != 0
+    assert "vector-size" in result.output.lower()
+
+
+def test_config_set_unknown_model_with_vector_size(runner):
+    from codebase_mcp.cli import main
+    from codebase_mcp.settings import get_settings
+
+    result = runner.invoke(
+        main, ["config", "set", "embedding-model", "nomic-embed-text", "--vector-size", "768"]
+    )
+    assert result.exit_code == 0
+    s = get_settings()
+    assert s.embedding_model == "nomic-embed-text"
+    assert s.vector_size == 768
+
+
+def test_config_set_api_key(runner):
+    from codebase_mcp.cli import main
+    from codebase_mcp.settings import get_settings
+
+    result = runner.invoke(main, ["config", "set", "api-key", "sk-testkey"])
+    assert result.exit_code == 0
+    assert get_settings().api_key == "sk-testkey"
+
+
+def test_config_set_api_base(runner):
+    from codebase_mcp.cli import main
+    from codebase_mcp.settings import get_settings
+
+    result = runner.invoke(main, ["config", "set", "api-base", "http://localhost:11434/v1"])
+    assert result.exit_code == 0
+    assert get_settings().api_base == "http://localhost:11434/v1"
+
+
+def test_config_list_shows_masked_api_key(runner):
+    from codebase_mcp.cli import main
+
+    runner.invoke(main, ["config", "set", "api-key", "sk-abcdefgh"])
+    result = runner.invoke(main, ["config", "list"])
+    assert result.exit_code == 0
+    assert "sk-ab" in result.output
+    assert "***" in result.output
+    assert "sk-abcdefgh" not in result.output
+
+
+def test_config_unset_api_key(runner):
+    from codebase_mcp.cli import main
+    from codebase_mcp.settings import get_settings
+
+    runner.invoke(main, ["config", "set", "api-key", "sk-testkey"])
+    result = runner.invoke(main, ["config", "unset", "api-key"])
+    assert result.exit_code == 0
+    assert get_settings().api_key is None
+
+
+def test_config_unset_embedding_model_resets_vector_size(runner):
+    from codebase_mcp.cli import main
+    from codebase_mcp.settings import get_settings
+
+    runner.invoke(main, ["config", "set", "embedding-model", "text-embedding-3-large"])
+    assert get_settings().vector_size == 3072
+
+    result = runner.invoke(main, ["config", "unset", "embedding-model"])
+    assert result.exit_code == 0
+    s = get_settings()
+    assert s.embedding_model == "text-embedding-3-small"
+    assert s.vector_size == 1536

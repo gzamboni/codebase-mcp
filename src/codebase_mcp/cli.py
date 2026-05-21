@@ -5,6 +5,7 @@ from rich.console import Console
 from rich.table import Table
 
 from . import indexer
+from .settings import KNOWN_MODELS, get_settings, save_settings, unset_settings_fields
 from .store import get_all_repos, get_client, is_indexed, load_config, remove_repo
 
 console = Console()
@@ -78,3 +79,90 @@ def serve() -> None:
     from .server import mcp
 
     mcp.run(transport="stdio")
+
+
+@main.group()
+def config():
+    """Manage global settings (embedding model, API key, API host)."""
+
+
+@config.group("set")
+def config_set():
+    """Set a config value."""
+
+
+@config_set.command("embedding-model")
+@click.argument("model")
+@click.option(
+    "--vector-size",
+    type=int,
+    default=None,
+    help="Vector dimension (required for unknown models).",
+)
+def set_embedding_model(model: str, vector_size: int | None) -> None:
+    """Set the embedding model. Known models derive vector-size automatically."""
+    if model in KNOWN_MODELS:
+        resolved_size = KNOWN_MODELS[model]
+    elif vector_size is not None:
+        resolved_size = vector_size
+    else:
+        console.print(f"[red]Unknown model '{model}'. Provide vector size: --vector-size 768[/red]")
+        raise SystemExit(1)
+    s = get_settings()
+    s.embedding_model = model
+    s.vector_size = resolved_size
+    save_settings(s)
+    console.print(f"[green]embedding_model={model}, vector_size={resolved_size}[/green]")
+
+
+@config_set.command("api-key")
+@click.argument("key")
+def set_api_key(key: str) -> None:
+    """Set the API key for the embedding provider."""
+    s = get_settings()
+    s.api_key = key
+    save_settings(s)
+    console.print("[green]api_key set.[/green]")
+
+
+@config_set.command("api-base")
+@click.argument("url")
+def set_api_base(url: str) -> None:
+    """Set the base URL for the embedding API (for OpenAI-compatible providers)."""
+    s = get_settings()
+    s.api_base = url
+    save_settings(s)
+    console.print(f"[green]api_base={url}[/green]")
+
+
+@config.command("list")
+def config_list() -> None:
+    """Show current global settings."""
+    s = get_settings()
+
+    if s.api_key:
+        masked_key = (s.api_key[:5] + "***") if len(s.api_key) > 5 else (s.api_key + "***")
+    else:
+        masked_key = "(not set)"
+
+    table = Table(show_header=False, box=None, padding=(0, 2))
+    table.add_column("Key", style="bold")
+    table.add_column("Value")
+    table.add_row("embedding_model", s.embedding_model)
+    table.add_row("vector_size", str(s.vector_size))
+    table.add_row("api_key", masked_key)
+    table.add_row("api_base", s.api_base or "(not set)")
+    console.print(table)
+
+
+@config.command("unset")
+@click.argument("key", type=click.Choice(["embedding-model", "api-key", "api-base"]))
+def config_unset(key: str) -> None:
+    """Remove a setting, reverting to default or env var fallback."""
+    field_map = {
+        "embedding-model": ["embedding_model", "vector_size"],
+        "api-key": ["api_key"],
+        "api-base": ["api_base"],
+    }
+    unset_settings_fields(field_map[key])
+    console.print(f"[green]{key} unset.[/green]")

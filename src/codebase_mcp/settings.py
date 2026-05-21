@@ -42,3 +42,15 @@ def save_settings(s: Settings) -> None:
 
 def get_settings() -> Settings:
     return load_settings()
+
+
+def unset_settings_fields(keys: list[str]) -> None:
+    path = _settings_path()
+    try:
+        data = json.loads(path.read_text())
+    except (OSError, json.JSONDecodeError):
+        data = {}
+    for k in keys:
+        data.pop(k, None)
+    _data_dir().mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, indent=2))
