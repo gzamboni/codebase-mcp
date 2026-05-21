@@ -73,3 +73,28 @@ def test_find_todos_finds_comment(tmp_path):
     ):
         result = fn(repo_path=str(tmp_path))
     assert "TODO" in result or "FIXME" in result
+
+
+def test_what_changed_no_repos():
+    fn = _get_tool("what_changed")
+    with patch("codebase_mcp.server.get_all_repos", return_value={}):
+        result = fn()
+    assert "No repos" in result
+
+
+def test_what_changed_detects_modified(tmp_path):
+    src = tmp_path / "app.py"
+    src.write_text("x = 1\n")
+    past_time = "2000-01-01T00:00:00+00:00"  # guaranteed old
+    fn = _get_tool("what_changed")
+    with (
+        patch(
+            "codebase_mcp.server.get_all_repos",
+            return_value={
+                str(tmp_path): {"repo_id": "abc", "last_indexed": past_time, "chunk_count": 1}
+            },
+        ),
+        patch("codebase_mcp.indexer.iter_files", return_value=[src]),
+    ):
+        result = fn(repo_path=str(tmp_path))
+    assert "app.py" in result

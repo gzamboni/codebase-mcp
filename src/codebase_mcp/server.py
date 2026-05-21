@@ -1,4 +1,5 @@
 import re
+from datetime import datetime, timezone
 from pathlib import Path
 
 from fastmcp import FastMCP
@@ -159,3 +160,49 @@ def get_file_outline(file_path: str) -> str:
         name = c.get("symbol_name") or "<anonymous>"
         lines.append(f"  {c['node_type']}  {name}  (lines {c['start_line']}–{c['end_line']})")
     return "\n".join(lines)
+
+
+@mcp.tool()
+def what_changed(repo_path: str | None = None) -> str:
+    """Show files added or modified since the last index run.
+
+    Args:
+        repo_path: Absolute path to a specific repo. Omit to check all indexed repos.
+    """
+    from .indexer import iter_files
+
+    config = get_all_repos()
+    if not config:
+        return "No repos indexed. Run: codebase-mcp index /path/to/repo"
+
+    if repo_path:
+        abs_path = str(Path(repo_path).resolve())
+        candidates = {abs_path: config[abs_path]} if abs_path in config else {}
+    else:
+        candidates = config
+
+    if not candidates:
+        return f"Repo not indexed: {repo_path}"
+
+    parts: list[str] = []
+    for path, meta in candidates.items():
+        last_indexed = datetime.fromisoformat(meta["last_indexed"])
+        if last_indexed.tzinfo is None:
+            last_indexed = last_indexed.replace(tzinfo=timezone.utc)
+
+        changed: list[str] = []
+        for filepath in iter_files(Path(path)):
+            mtime = datetime.fromtimestamp(filepath.stat().st_mtime, tz=timezone.utc)
+            if mtime > last_indexed:
+                rel = str(filepath.relative_to(path))
+                changed.append(f"  modified  {rel}")
+
+        if changed:
+            parts.append(
+                f"{path} ({len(changed)} changed since {meta['last_indexed'][:19]}):\n"
+                + "\n".join(changed)
+            )
+        else:
+            parts.append(f"{path}: no changes since {meta['last_indexed'][:19]}")
+
+    return "\n\n".join(parts)
