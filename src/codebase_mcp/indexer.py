@@ -72,6 +72,7 @@ def _chunk_file_lines(content: str, filepath: str, repo_path: str) -> list[dict]
                 "start_line": 1,
                 "end_line": len(lines),
                 "repo_path": repo_path,
+                "symbol_name": None,
             }
         ]
 
@@ -89,6 +90,7 @@ def _chunk_file_lines(content: str, filepath: str, repo_path: str) -> list[dict]
                 "start_line": i + 1,
                 "end_line": i + len(chunk_lines),
                 "repo_path": repo_path,
+                "symbol_name": None,
             }
         )
     return chunks
