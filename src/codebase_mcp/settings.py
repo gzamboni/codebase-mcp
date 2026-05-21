@@ -52,5 +52,6 @@ def unset_settings_fields(keys: list[str]) -> None:
         data = {}
     for k in keys:
         data.pop(k, None)
+    data = {k: v for k, v in data.items() if v is not None}
     _data_dir().mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, indent=2))
