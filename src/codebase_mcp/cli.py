@@ -39,6 +39,23 @@ def reindex(path: str) -> None:
     console.print(f"[green]Re-indexed {count} chunks from {abs_path}[/green]")
 
 
+@main.command()
+@click.argument("repo_path", type=click.Path(exists=True, file_okay=False))
+def update(repo_path):
+    """Incrementally update index for REPO_PATH (only re-indexes changed files)."""
+    from .indexer import index_repo_incremental
+
+    abs_path = str(Path(repo_path).resolve())
+    if not is_indexed(abs_path):
+        click.echo(f"Not indexed. Run: codebase-mcp index {repo_path}", err=True)
+        raise SystemExit(1)
+    count = index_repo_incremental(abs_path)
+    if count == 0:
+        click.echo("No changes detected. Index is up to date.")
+    else:
+        click.echo(f"Updated {count} chunks.")
+
+
 @main.command("list")
 def list_repos() -> None:
     """List all indexed repos with stats."""

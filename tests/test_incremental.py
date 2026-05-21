@@ -1,3 +1,5 @@
+from unittest.mock import MagicMock, patch
+
 import pytest
 
 from codebase_mcp.store import load_file_hashes, save_file_hashes
@@ -31,3 +33,35 @@ def test_save_file_hashes_unknown_repo_is_noop(isolated):
     save_file_hashes("/not/indexed", {"file.py": "hash"})
     result = load_file_hashes("/not/indexed")
     assert result == {}
+
+
+def test_index_incremental_skips_unchanged(isolated):
+    repo = isolated / "repo"
+    repo.mkdir()
+    (repo / "a.py").write_text("def foo(): pass\n")
+
+    from codebase_mcp.indexer import index_repo_incremental
+    from codebase_mcp.store import add_repo
+
+    # Pre-register the repo so incremental can find it
+    add_repo(str(repo), 0)
+
+    mock_qdrant = MagicMock()
+    mock_qdrant.collection_exists.return_value = True
+    mock_qdrant.get_collection.return_value = MagicMock(
+        config=MagicMock(params=MagicMock(vectors=MagicMock(size=1536)))
+    )
+    mock_qdrant.scroll.return_value = ([], None)
+
+    mock_openai = MagicMock()
+    mock_openai.embeddings.create.return_value = MagicMock(data=[MagicMock(embedding=[0.1] * 1536)])
+
+    with (
+        patch("codebase_mcp.indexer.get_client", return_value=mock_qdrant),
+        patch("codebase_mcp.indexer.OpenAI", return_value=mock_openai),
+    ):
+        count1 = index_repo_incremental(str(repo))
+        count2 = index_repo_incremental(str(repo))  # second call: nothing changed
+
+    assert count1 > 0  # first run indexed something
+    assert count2 == 0  # second run: file unchanged, nothing re-embedded
