@@ -14,11 +14,11 @@ def search(query: str, repo_path: str | None = None) -> str:
     if repo_path:
         abs_path = str(Path(repo_path).resolve())
         if abs_path not in config:
-            return f"Repo not indexed. Run: codebase-mcp index {repo_path}"
+            return f"Repo not indexed. Run: yacodebase-mcp index {repo_path}"
         candidates = {abs_path: config[abs_path]}
     else:
         if not config:
-            return "No repos indexed. Run: codebase-mcp index /path/to/repo"
+            return "No repos indexed. Run: yacodebase-mcp index /path/to/repo"
         candidates = config
 
     settings = get_settings()
@@ -37,7 +37,7 @@ def search(query: str, repo_path: str | None = None) -> str:
             warnings.append(
                 f"⚠ Vector size mismatch for {path}: "
                 f"indexed with {actual_size}, current model expects {settings.vector_size}. "
-                f"Run: codebase-mcp reindex {path}"
+                f"Run: yacodebase-mcp reindex {path}"
             )
             continue
         valid_candidates.append((path, repo_id))
