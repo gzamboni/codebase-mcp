@@ -70,4 +70,4 @@ def test_search_no_index(tmp_path):
         result = search("anything", repo_path=str(tmp_path / "nonexistent"))
 
     assert "not indexed" in result.lower()
-    assert "codebase-mcp index" in result
+    assert "yacodebase-mcp index" in result

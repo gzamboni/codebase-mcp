@@ -15,7 +15,7 @@ console = Console()
 def main():
     """Codebase vector search — index repos, search via MCP."""
     import sys
-    if Path(sys.argv[0]).name == "codebase-mcp":
+    if Path(sys.argv[0]).stem == "codebase-mcp":
         click.echo("Warning: codebase-mcp is deprecated, use yacodebase-mcp", err=True)
 
 
