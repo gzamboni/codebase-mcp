@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import json
 import sys
 from dataclasses import dataclass, field
@@ -8,7 +9,7 @@ from typing import Callable
 
 MCP_SERVER_NAME = "codebase-search"
 MCP_SERVER_CMD = "yacodebase-mcp"
-MCP_SERVER_ARGS = ["serve"]
+MCP_SERVER_ARGS: tuple[str, ...] = ("serve",)
 
 
 @dataclass
@@ -22,22 +23,19 @@ class Agent:
     def config_path(self) -> Path:
         return self._get_path()
 
-    def is_present(self) -> bool:
-        return self.config_path().exists()
-
     def read_config(self) -> dict:
         p = self.config_path()
         if not p.exists():
             return {}
-        try:
-            return json.loads(p.read_text())
-        except json.JSONDecodeError:
-            return {}
+        return json.loads(p.read_text())
 
     def write_config(self, data: dict) -> None:
         p = self.config_path()
-        p.parent.mkdir(parents=True, exist_ok=True)
-        p.write_text(json.dumps(data, indent=2) + "\n")
+        try:
+            p.parent.mkdir(parents=True, exist_ok=True)
+            p.write_text(json.dumps(data, indent=2) + "\n")
+        except OSError as e:
+            raise OSError(f"Cannot write {self.name} config to {p}: {e}") from e
 
     def is_installed(self) -> bool:
         return self._check_fn(self.read_config())
@@ -47,12 +45,13 @@ class Agent:
 
 
 def _std_entry() -> dict:
-    return {"command": MCP_SERVER_CMD, "args": MCP_SERVER_ARGS}
+    return {"command": MCP_SERVER_CMD, "args": list(MCP_SERVER_ARGS)}
 
 
 def _merge_mcpservers(data: dict) -> dict:
-    data.setdefault("mcpServers", {})[MCP_SERVER_NAME] = _std_entry()
-    return data
+    result = copy.deepcopy(data)
+    result.setdefault("mcpServers", {})[MCP_SERVER_NAME] = _std_entry()
+    return result
 
 
 def _check_mcpservers(data: dict) -> bool:
@@ -60,9 +59,10 @@ def _check_mcpservers(data: dict) -> bool:
 
 
 def _merge_vscode(data: dict) -> dict:
-    entry = {"type": "stdio", "command": MCP_SERVER_CMD, "args": MCP_SERVER_ARGS}
-    data.setdefault("mcp", {}).setdefault("servers", {})[MCP_SERVER_NAME] = entry
-    return data
+    result = copy.deepcopy(data)
+    entry = {"type": "stdio", "command": MCP_SERVER_CMD, "args": list(MCP_SERVER_ARGS)}
+    result.setdefault("mcp", {}).setdefault("servers", {})[MCP_SERVER_NAME] = entry
+    return result
 
 
 def _check_vscode(data: dict) -> bool:
@@ -70,10 +70,11 @@ def _check_vscode(data: dict) -> bool:
 
 
 def _merge_zed(data: dict) -> dict:
-    data.setdefault("context_servers", {})[MCP_SERVER_NAME] = {
-        "command": {"path": MCP_SERVER_CMD, "args": MCP_SERVER_ARGS}
+    result = copy.deepcopy(data)
+    result.setdefault("context_servers", {})[MCP_SERVER_NAME] = {
+        "command": {"path": MCP_SERVER_CMD, "args": list(MCP_SERVER_ARGS)}
     }
-    return data
+    return result
 
 
 def _check_zed(data: dict) -> bool:
