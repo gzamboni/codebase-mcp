@@ -94,7 +94,7 @@ Add to `~/.claude/settings.json`:
 }
 ```
 
-API key can also be set via `yacodebase-mcp config set api-key sk-...` (persisted in `~/.codebase-mcp/settings.json`), which takes precedence over the env var.
+API key can also be set via `yacodebase-mcp config set api-key sk-...` (persisted in `~/.yacodebase-mcp/settings.json`), which takes precedence over the env var.
 
 ## MCP tools
 
@@ -231,10 +231,10 @@ Files without AST support (`.md`, `.yaml`, `.toml`, `.json`, `.rb`, `.cpp`, `.c`
 
 ## Data storage
 
-All data lives in `~/.codebase-mcp/`:
+All data lives in `~/.yacodebase-mcp/`:
 
 ```
-~/.codebase-mcp/
+~/.yacodebase-mcp/
   config.json      # indexed repo metadata (paths, repo_ids, chunk counts, file hashes, timestamps)
   settings.json    # embedding model, vector size, api_key, api_base
   knowledge.db     # SQLite: architectural decisions and notes

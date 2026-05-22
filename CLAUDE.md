@@ -50,7 +50,7 @@ tests/
 
 **AST chunking → line fallback**: `indexer.chunk_file` tries `ast_chunker.chunk_file_ast` first. If the language is unsupported or tree-sitter fails, falls back to 100-line sliding window (20-line overlap). This ensures semantic boundaries for supported languages without breaking on unknown file types.
 
-**In-process Qdrant**: No external service needed. `store.get_client()` returns a `QdrantClient` pointing at `~/.codebase-mcp/qdrant/`. One collection per repo, named by `repo_id` (hash of abs path).
+**In-process Qdrant**: No external service needed. `store.get_client()` returns a `QdrantClient` pointing at `~/.yacodebase-mcp/qdrant/`. One collection per repo, named by `repo_id` (hash of abs path).
 
 **OpenAI-compatible embeddings**: `indexer` and `searcher` both instantiate `openai.OpenAI(api_key=..., base_url=...)` from settings. Any OpenAI-compatible provider works by setting `api_base`.
 
@@ -70,7 +70,7 @@ tests/
 
 ## Data dir
 
-`~/.codebase-mcp/` — created on first use by `store._data_dir()`.
+`~/.yacodebase-mcp/` — created on first use by `store._data_dir()`.
 
 - `config.json` — repo registry: `{abs_path: {repo_id, chunk_count, last_indexed}}`
 - `settings.json` — persistent settings (only non-null, non-default values written)
