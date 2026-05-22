@@ -2,17 +2,17 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from codebase_mcp.store import load_file_hashes, save_file_hashes
+from yacodebase_mcp.store import load_file_hashes, save_file_hashes
 
 
 @pytest.fixture()
 def isolated(tmp_path, monkeypatch):
-    monkeypatch.setenv("CODEBASE_MCP_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("YACODEBASE_MCP_DATA_DIR", str(tmp_path))
     return tmp_path
 
 
 def test_save_and_load_file_hashes(isolated):
-    from codebase_mcp.store import add_repo
+    from yacodebase_mcp.store import add_repo
 
     add_repo("/test/repo", 10)
 
@@ -40,8 +40,8 @@ def test_index_incremental_skips_unchanged(isolated):
     repo.mkdir()
     (repo / "a.py").write_text("def foo(): pass\n")
 
-    from codebase_mcp.indexer import index_repo_incremental
-    from codebase_mcp.store import add_repo
+    from yacodebase_mcp.indexer import index_repo_incremental
+    from yacodebase_mcp.store import add_repo
 
     # Pre-register the repo so incremental can find it
     add_repo(str(repo), 0)
@@ -57,8 +57,8 @@ def test_index_incremental_skips_unchanged(isolated):
     mock_openai.embeddings.create.return_value = MagicMock(data=[MagicMock(embedding=[0.1] * 1536)])
 
     with (
-        patch("codebase_mcp.indexer.get_client", return_value=mock_qdrant),
-        patch("codebase_mcp.indexer.OpenAI", return_value=mock_openai),
+        patch("yacodebase_mcp.indexer.get_client", return_value=mock_qdrant),
+        patch("yacodebase_mcp.indexer.OpenAI", return_value=mock_openai),
     ):
         count1 = index_repo_incremental(str(repo))
         count2 = index_repo_incremental(str(repo))  # second call: nothing changed

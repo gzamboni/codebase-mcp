@@ -12,14 +12,14 @@ def agent_config_dir(tmp_path, monkeypatch):
 
 
 def test_claude_code_config_path(agent_config_dir):
-    from codebase_mcp.agents import AGENTS
+    from yacodebase_mcp.agents import AGENTS
 
     expected = agent_config_dir / ".claude" / "settings.json"
     assert AGENTS["claude-code"].config_path() == expected
 
 
 def test_install_creates_config(agent_config_dir):
-    from codebase_mcp.agents import AGENTS, MCP_SERVER_NAME, install_agent
+    from yacodebase_mcp.agents import AGENTS, MCP_SERVER_NAME, install_agent
 
     agent = AGENTS["claude-code"]
     result = install_agent(agent)
@@ -31,7 +31,7 @@ def test_install_creates_config(agent_config_dir):
 
 
 def test_install_idempotent(agent_config_dir):
-    from codebase_mcp.agents import AGENTS, install_agent
+    from yacodebase_mcp.agents import AGENTS, install_agent
 
     agent = AGENTS["claude-code"]
     install_agent(agent)
@@ -40,7 +40,7 @@ def test_install_idempotent(agent_config_dir):
 
 
 def test_install_dry_run_no_write(agent_config_dir):
-    from codebase_mcp.agents import AGENTS, install_agent
+    from yacodebase_mcp.agents import AGENTS, install_agent
 
     agent = AGENTS["claude-code"]
     result = install_agent(agent, dry_run=True)
@@ -49,7 +49,7 @@ def test_install_dry_run_no_write(agent_config_dir):
 
 
 def test_install_merges_existing_config(agent_config_dir):
-    from codebase_mcp.agents import AGENTS, MCP_SERVER_NAME, install_agent
+    from yacodebase_mcp.agents import AGENTS, MCP_SERVER_NAME, install_agent
 
     agent = AGENTS["claude-code"]
     agent.config_path().parent.mkdir(parents=True, exist_ok=True)
@@ -62,7 +62,7 @@ def test_install_merges_existing_config(agent_config_dir):
 
 
 def test_vscode_format(agent_config_dir):
-    from codebase_mcp.agents import AGENTS, MCP_SERVER_NAME, install_agent
+    from yacodebase_mcp.agents import AGENTS, MCP_SERVER_NAME, install_agent
 
     agent = AGENTS["copilot"]
     install_agent(agent)
@@ -73,7 +73,7 @@ def test_vscode_format(agent_config_dir):
 
 
 def test_zed_format(agent_config_dir):
-    from codebase_mcp.agents import AGENTS, MCP_SERVER_NAME, install_agent
+    from yacodebase_mcp.agents import AGENTS, MCP_SERVER_NAME, install_agent
 
     agent = AGENTS["zed"]
     install_agent(agent)
@@ -84,13 +84,13 @@ def test_zed_format(agent_config_dir):
 
 
 def test_is_installed_false_when_absent(agent_config_dir):
-    from codebase_mcp.agents import AGENTS
+    from yacodebase_mcp.agents import AGENTS
 
     assert AGENTS["claude-code"].is_installed() is False
 
 
 def test_is_installed_true_after_install(agent_config_dir):
-    from codebase_mcp.agents import AGENTS, install_agent
+    from yacodebase_mcp.agents import AGENTS, install_agent
 
     agent = AGENTS["cursor"]
     install_agent(agent)
@@ -98,7 +98,7 @@ def test_is_installed_true_after_install(agent_config_dir):
 
 
 def test_all_agents_present():
-    from codebase_mcp.agents import AGENTS
+    from yacodebase_mcp.agents import AGENTS
 
     expected = {"claude-code", "cursor", "windsurf", "copilot", "zed", "opencode"}
     assert set(AGENTS.keys()) == expected

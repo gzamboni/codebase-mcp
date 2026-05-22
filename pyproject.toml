@@ -38,11 +38,11 @@ Repository = "https://github.com/gzamboni/yacodebase-mcp"
 Issues     = "https://github.com/gzamboni/yacodebase-mcp/issues"
 
 [project.scripts]
-yacodebase-mcp = "codebase_mcp.cli:main"
-codebase-mcp   = "codebase_mcp.cli:main"
+yacodebase-mcp = "yacodebase_mcp.cli:main"
+codebase-mcp   = "yacodebase_mcp.cli:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/codebase_mcp"]
+packages = ["src/yacodebase_mcp"]
 
 [build-system]
 requires = ["hatchling"]

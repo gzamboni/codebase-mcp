@@ -3,19 +3,19 @@ import pytest
 
 @pytest.fixture(autouse=True)
 def isolated_store(tmp_path, monkeypatch):
-    monkeypatch.setenv("CODEBASE_MCP_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("YACODEBASE_MCP_DATA_DIR", str(tmp_path))
     return tmp_path
 
 
 def test_get_repo_id_is_stable():
-    from codebase_mcp.store import get_repo_id
+    from yacodebase_mcp.store import get_repo_id
 
     assert get_repo_id("/some/path") == get_repo_id("/some/path")
     assert get_repo_id("/some/path") != get_repo_id("/other/path")
 
 
 def test_config_roundtrip(tmp_path):
-    from codebase_mcp.store import add_repo, is_indexed, load_config
+    from yacodebase_mcp.store import add_repo, is_indexed, load_config
 
     path = str(tmp_path / "myrepo")
     assert not is_indexed(path)
@@ -27,7 +27,7 @@ def test_config_roundtrip(tmp_path):
 
 
 def test_remove_repo(tmp_path):
-    from codebase_mcp.store import add_repo, is_indexed, remove_repo
+    from yacodebase_mcp.store import add_repo, is_indexed, remove_repo
 
     path = str(tmp_path / "myrepo")
     add_repo(path, chunk_count=10)
@@ -37,7 +37,7 @@ def test_remove_repo(tmp_path):
 
 
 def test_get_all_repos(tmp_path):
-    from codebase_mcp.store import add_repo, get_all_repos
+    from yacodebase_mcp.store import add_repo, get_all_repos
 
     p1 = str(tmp_path / "repo1")
     p2 = str(tmp_path / "repo2")
@@ -49,7 +49,7 @@ def test_get_all_repos(tmp_path):
 
 
 def test_ensure_collection_creates_new(tmp_path):
-    from codebase_mcp.store import ensure_collection, get_client, get_repo_id
+    from yacodebase_mcp.store import ensure_collection, get_client, get_repo_id
 
     client = get_client()
     repo_id = get_repo_id(str(tmp_path / "repo"))
@@ -60,7 +60,7 @@ def test_ensure_collection_creates_new(tmp_path):
 def test_ensure_collection_replaces_existing(tmp_path):
     from qdrant_client.models import PointStruct
 
-    from codebase_mcp.store import ensure_collection, get_client, get_repo_id
+    from yacodebase_mcp.store import ensure_collection, get_client, get_repo_id
 
     client = get_client()
     repo_id = get_repo_id(str(tmp_path / "repo"))
@@ -77,14 +77,14 @@ def test_ensure_collection_replaces_existing(tmp_path):
 def test_data_dir_migrates_old_to_new(tmp_path, monkeypatch):
     from pathlib import Path
 
-    monkeypatch.delenv("CODEBASE_MCP_DATA_DIR", raising=False)
+    monkeypatch.delenv("YACODEBASE_MCP_DATA_DIR", raising=False)
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
 
     old = tmp_path / ".codebase-mcp"
     old.mkdir()
     (old / "config.json").write_text("{}")
 
-    from codebase_mcp.store import _data_dir
+    from yacodebase_mcp.store import _data_dir
 
     result = _data_dir()
     assert result == tmp_path / ".yacodebase-mcp"
@@ -95,10 +95,10 @@ def test_data_dir_migrates_old_to_new(tmp_path, monkeypatch):
 def test_data_dir_no_old_dir(tmp_path, monkeypatch):
     from pathlib import Path
 
-    monkeypatch.delenv("CODEBASE_MCP_DATA_DIR", raising=False)
+    monkeypatch.delenv("YACODEBASE_MCP_DATA_DIR", raising=False)
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
 
-    from codebase_mcp.store import _data_dir
+    from yacodebase_mcp.store import _data_dir
 
     result = _data_dir()
     assert result == tmp_path / ".yacodebase-mcp"
@@ -108,8 +108,8 @@ def test_data_dir_env_var_wins(tmp_path, monkeypatch):
     from pathlib import Path
 
     custom = str(tmp_path / "custom-data")
-    monkeypatch.setenv("CODEBASE_MCP_DATA_DIR", custom)
+    monkeypatch.setenv("YACODEBASE_MCP_DATA_DIR", custom)
 
-    from codebase_mcp.store import _data_dir
+    from yacodebase_mcp.store import _data_dir
 
     assert _data_dir() == Path(custom)

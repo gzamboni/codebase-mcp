@@ -6,7 +6,7 @@ import pytest
 
 @pytest.fixture(autouse=True)
 def isolated_store(tmp_path, monkeypatch):
-    monkeypatch.setenv("CODEBASE_MCP_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("YACODEBASE_MCP_DATA_DIR", str(tmp_path))
 
 
 def _fake_embedding(size: int = 1536) -> list[float]:
@@ -23,7 +23,7 @@ def _seeded_store(tmp_path, repo_path: str, vector_size: int = 1536):
     """Put a fake repo entry in config + a real Qdrant collection with one point."""
     from qdrant_client.models import PointStruct
 
-    from codebase_mcp.store import add_repo, ensure_collection, get_client, get_repo_id
+    from yacodebase_mcp.store import add_repo, ensure_collection, get_client, get_repo_id
 
     abs_path = str(Path(repo_path).resolve())
     repo_id = get_repo_id(abs_path)
@@ -52,9 +52,9 @@ def _seeded_store(tmp_path, repo_path: str, vector_size: int = 1536):
 def test_search_returns_results(tmp_path):
     abs_path = _seeded_store(tmp_path, str(tmp_path / "myrepo"))
 
-    with patch("codebase_mcp.searcher.OpenAI") as MockOpenAI:
+    with patch("yacodebase_mcp.searcher.OpenAI") as MockOpenAI:
         MockOpenAI.return_value = _mock_openai()
-        from codebase_mcp.searcher import search
+        from yacodebase_mcp.searcher import search
 
         result = search("something", repo_path=abs_path)
 
@@ -65,9 +65,9 @@ def test_search_returns_results(tmp_path):
 def test_search_all_repos_when_no_path(tmp_path):
     _seeded_store(tmp_path, str(tmp_path / "myrepo"))
 
-    with patch("codebase_mcp.searcher.OpenAI") as MockOpenAI:
+    with patch("yacodebase_mcp.searcher.OpenAI") as MockOpenAI:
         MockOpenAI.return_value = _mock_openai()
-        from codebase_mcp.searcher import search
+        from yacodebase_mcp.searcher import search
 
         result = search("something")
 
@@ -75,9 +75,9 @@ def test_search_all_repos_when_no_path(tmp_path):
 
 
 def test_search_not_indexed_repo(tmp_path):
-    with patch("codebase_mcp.searcher.OpenAI") as MockOpenAI:
+    with patch("yacodebase_mcp.searcher.OpenAI") as MockOpenAI:
         MockOpenAI.return_value = _mock_openai()
-        from codebase_mcp.searcher import search
+        from yacodebase_mcp.searcher import search
 
         result = search("something", repo_path=str(tmp_path / "nonexistent"))
 
@@ -85,9 +85,9 @@ def test_search_not_indexed_repo(tmp_path):
 
 
 def test_search_no_repos_indexed(tmp_path):
-    with patch("codebase_mcp.searcher.OpenAI") as MockOpenAI:
+    with patch("yacodebase_mcp.searcher.OpenAI") as MockOpenAI:
         MockOpenAI.return_value = _mock_openai()
-        from codebase_mcp.searcher import search
+        from yacodebase_mcp.searcher import search
 
         result = search("something")
 
@@ -97,7 +97,7 @@ def test_search_no_repos_indexed(tmp_path):
 def test_search_uses_settings_model(tmp_path):
     abs_path = _seeded_store(tmp_path, str(tmp_path / "myrepo"))
 
-    from codebase_mcp.settings import Settings
+    from yacodebase_mcp.settings import Settings
 
     custom_settings = Settings(
         embedding_model="custom-model",
@@ -109,11 +109,11 @@ def test_search_uses_settings_model(tmp_path):
     mock.embeddings.create.return_value.data = [MagicMock(embedding=_fake_embedding())]
 
     with (
-        patch("codebase_mcp.searcher.get_settings", return_value=custom_settings),
-        patch("codebase_mcp.searcher.OpenAI") as MockOpenAI,
+        patch("yacodebase_mcp.searcher.get_settings", return_value=custom_settings),
+        patch("yacodebase_mcp.searcher.OpenAI") as MockOpenAI,
     ):
         MockOpenAI.return_value = mock
-        from codebase_mcp.searcher import search
+        from yacodebase_mcp.searcher import search
 
         search("hello", repo_path=abs_path)
 
@@ -127,15 +127,15 @@ def test_search_returns_mismatch_warning(tmp_path):
     # Seed store with vector_size=1536, then search with settings that say 3072.
     abs_path = _seeded_store(tmp_path, str(tmp_path / "myrepo"), vector_size=1536)
 
-    from codebase_mcp.settings import Settings
+    from yacodebase_mcp.settings import Settings
 
     mismatched_settings = Settings(
         embedding_model="text-embedding-3-large",
         vector_size=3072,
     )
 
-    with patch("codebase_mcp.searcher.get_settings", return_value=mismatched_settings):
-        from codebase_mcp.searcher import search
+    with patch("yacodebase_mcp.searcher.get_settings", return_value=mismatched_settings):
+        from yacodebase_mcp.searcher import search
 
         result = search("hello", repo_path=abs_path)
 

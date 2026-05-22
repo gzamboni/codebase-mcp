@@ -5,7 +5,7 @@ import pytest
 
 @pytest.fixture(autouse=True)
 def isolated_store(tmp_path, monkeypatch):
-    monkeypatch.setenv("CODEBASE_MCP_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("YACODEBASE_MCP_DATA_DIR", str(tmp_path))
 
 
 def _fake_embedding(size: int = 1536) -> list[float]:
@@ -28,16 +28,16 @@ def _mock_openai_for_search():
 
 def test_index_and_search(fixture_repo, tmp_path):
     """Full flow: index a repo, search it, get non-empty results."""
-    from codebase_mcp.indexer import index_repo
-    from codebase_mcp.searcher import search
+    from yacodebase_mcp.indexer import index_repo
+    from yacodebase_mcp.searcher import search
 
-    with patch("codebase_mcp.indexer.OpenAI") as MockIdx:
+    with patch("yacodebase_mcp.indexer.OpenAI") as MockIdx:
         MockIdx.return_value = _mock_openai_for_index()
         count = index_repo(str(fixture_repo))
 
     assert count > 0
 
-    with patch("codebase_mcp.searcher.OpenAI") as MockSearch:
+    with patch("yacodebase_mcp.searcher.OpenAI") as MockSearch:
         MockSearch.return_value = _mock_openai_for_search()
         result = search("authentication token", repo_path=str(fixture_repo.resolve()))
 
@@ -47,10 +47,10 @@ def test_index_and_search(fixture_repo, tmp_path):
 
 def test_reindex_clears_old(fixture_repo, tmp_path):
     """Reindex replaces old chunks; chunk count stays consistent."""
-    from codebase_mcp.indexer import index_repo
-    from codebase_mcp.store import load_config
+    from yacodebase_mcp.indexer import index_repo
+    from yacodebase_mcp.store import load_config
 
-    with patch("codebase_mcp.indexer.OpenAI") as MockIdx:
+    with patch("yacodebase_mcp.indexer.OpenAI") as MockIdx:
         MockIdx.return_value = _mock_openai_for_index()
         first_count = index_repo(str(fixture_repo))
         second_count = index_repo(str(fixture_repo))
@@ -63,9 +63,9 @@ def test_reindex_clears_old(fixture_repo, tmp_path):
 
 def test_search_no_index(tmp_path):
     """Searching an unindexed repo returns a helpful error message."""
-    from codebase_mcp.searcher import search
+    from yacodebase_mcp.searcher import search
 
-    with patch("codebase_mcp.searcher.OpenAI") as MockSearch:
+    with patch("yacodebase_mcp.searcher.OpenAI") as MockSearch:
         MockSearch.return_value = _mock_openai_for_search()
         result = search("anything", repo_path=str(tmp_path / "nonexistent"))
 

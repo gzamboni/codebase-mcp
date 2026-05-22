@@ -28,7 +28,7 @@ Line length: 100. Rules: E, F, I (pycodestyle, pyflakes, isort).
 ## Project structure
 
 ```
-src/codebase_mcp/
+src/yacodebase_mcp/
   cli.py          # Click CLI: index, reindex, list, remove, serve, config *
   server.py       # FastMCP server — exposes search_codebase + list_indexed_repos
   indexer.py      # File walking, chunking, embedding, Qdrant upsert

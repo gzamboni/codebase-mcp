@@ -6,7 +6,7 @@ from click.testing import CliRunner
 
 @pytest.fixture(autouse=True)
 def isolated_store(tmp_path, monkeypatch):
-    monkeypatch.setenv("CODEBASE_MCP_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("YACODEBASE_MCP_DATA_DIR", str(tmp_path))
 
 
 @pytest.fixture
@@ -23,9 +23,9 @@ def sample_repo(tmp_path):
 
 
 def test_index_command(runner, sample_repo):
-    from codebase_mcp.cli import main
+    from yacodebase_mcp.cli import main
 
-    with patch("codebase_mcp.indexer.OpenAI") as MockOpenAI:
+    with patch("yacodebase_mcp.indexer.OpenAI") as MockOpenAI:
         mock = MockOpenAI.return_value
         mock.embeddings.create.return_value.data = []
         result = runner.invoke(main, ["index", str(sample_repo)])
@@ -35,9 +35,9 @@ def test_index_command(runner, sample_repo):
 
 
 def test_index_twice_fails(runner, sample_repo):
-    from codebase_mcp.cli import main
+    from yacodebase_mcp.cli import main
 
-    with patch("codebase_mcp.indexer.OpenAI") as MockOpenAI:
+    with patch("yacodebase_mcp.indexer.OpenAI") as MockOpenAI:
         mock = MockOpenAI.return_value
         mock.embeddings.create.return_value.data = []
         runner.invoke(main, ["index", str(sample_repo)])
@@ -48,9 +48,9 @@ def test_index_twice_fails(runner, sample_repo):
 
 
 def test_reindex_command(runner, sample_repo):
-    from codebase_mcp.cli import main
+    from yacodebase_mcp.cli import main
 
-    with patch("codebase_mcp.indexer.OpenAI") as MockOpenAI:
+    with patch("yacodebase_mcp.indexer.OpenAI") as MockOpenAI:
         mock = MockOpenAI.return_value
         mock.embeddings.create.return_value.data = []
         runner.invoke(main, ["index", str(sample_repo)])
@@ -61,7 +61,7 @@ def test_reindex_command(runner, sample_repo):
 
 
 def test_list_command_empty(runner):
-    from codebase_mcp.cli import main
+    from yacodebase_mcp.cli import main
 
     result = runner.invoke(main, ["list"])
     assert result.exit_code == 0
@@ -69,9 +69,9 @@ def test_list_command_empty(runner):
 
 
 def test_list_command_shows_repo(runner, sample_repo):
-    from codebase_mcp.cli import main
+    from yacodebase_mcp.cli import main
 
-    with patch("codebase_mcp.indexer.OpenAI") as MockOpenAI:
+    with patch("yacodebase_mcp.indexer.OpenAI") as MockOpenAI:
         mock = MockOpenAI.return_value
         mock.embeddings.create.return_value.data = []
         runner.invoke(main, ["index", str(sample_repo)])
@@ -82,9 +82,9 @@ def test_list_command_shows_repo(runner, sample_repo):
 
 
 def test_remove_command(runner, sample_repo):
-    from codebase_mcp.cli import main
+    from yacodebase_mcp.cli import main
 
-    with patch("codebase_mcp.indexer.OpenAI") as MockOpenAI:
+    with patch("yacodebase_mcp.indexer.OpenAI") as MockOpenAI:
         mock = MockOpenAI.return_value
         mock.embeddings.create.return_value.data = []
         runner.invoke(main, ["index", str(sample_repo)])
@@ -95,14 +95,14 @@ def test_remove_command(runner, sample_repo):
 
 
 def test_remove_nonexistent_fails(runner, tmp_path):
-    from codebase_mcp.cli import main
+    from yacodebase_mcp.cli import main
 
     result = runner.invoke(main, ["remove", str(tmp_path / "ghost")])
     assert result.exit_code != 0
 
 
 def test_config_list_defaults(runner):
-    from codebase_mcp.cli import main
+    from yacodebase_mcp.cli import main
 
     result = runner.invoke(main, ["config", "list"])
     assert result.exit_code == 0
@@ -111,8 +111,8 @@ def test_config_list_defaults(runner):
 
 
 def test_config_set_known_model(runner):
-    from codebase_mcp.cli import main
-    from codebase_mcp.settings import get_settings
+    from yacodebase_mcp.cli import main
+    from yacodebase_mcp.settings import get_settings
 
     result = runner.invoke(main, ["config", "set", "embedding-model", "text-embedding-3-large"])
     assert result.exit_code == 0
@@ -122,7 +122,7 @@ def test_config_set_known_model(runner):
 
 
 def test_config_set_unknown_model_without_vector_size_fails(runner):
-    from codebase_mcp.cli import main
+    from yacodebase_mcp.cli import main
 
     result = runner.invoke(main, ["config", "set", "embedding-model", "nomic-embed-text"])
     assert result.exit_code != 0
@@ -130,8 +130,8 @@ def test_config_set_unknown_model_without_vector_size_fails(runner):
 
 
 def test_config_set_unknown_model_with_vector_size(runner):
-    from codebase_mcp.cli import main
-    from codebase_mcp.settings import get_settings
+    from yacodebase_mcp.cli import main
+    from yacodebase_mcp.settings import get_settings
 
     result = runner.invoke(
         main, ["config", "set", "embedding-model", "nomic-embed-text", "--vector-size", "768"]
@@ -143,8 +143,8 @@ def test_config_set_unknown_model_with_vector_size(runner):
 
 
 def test_config_set_api_key(runner):
-    from codebase_mcp.cli import main
-    from codebase_mcp.settings import get_settings
+    from yacodebase_mcp.cli import main
+    from yacodebase_mcp.settings import get_settings
 
     result = runner.invoke(main, ["config", "set", "api-key", "sk-testkey"])
     assert result.exit_code == 0
@@ -152,8 +152,8 @@ def test_config_set_api_key(runner):
 
 
 def test_config_set_api_base(runner):
-    from codebase_mcp.cli import main
-    from codebase_mcp.settings import get_settings
+    from yacodebase_mcp.cli import main
+    from yacodebase_mcp.settings import get_settings
 
     result = runner.invoke(main, ["config", "set", "api-base", "http://localhost:11434/v1"])
     assert result.exit_code == 0
@@ -161,7 +161,7 @@ def test_config_set_api_base(runner):
 
 
 def test_config_list_shows_masked_api_key(runner):
-    from codebase_mcp.cli import main
+    from yacodebase_mcp.cli import main
 
     runner.invoke(main, ["config", "set", "api-key", "sk-abcdefgh"])
     result = runner.invoke(main, ["config", "list"])
@@ -172,8 +172,8 @@ def test_config_list_shows_masked_api_key(runner):
 
 
 def test_config_unset_api_key(runner):
-    from codebase_mcp.cli import main
-    from codebase_mcp.settings import get_settings
+    from yacodebase_mcp.cli import main
+    from yacodebase_mcp.settings import get_settings
 
     runner.invoke(main, ["config", "set", "api-key", "sk-testkey"])
     result = runner.invoke(main, ["config", "unset", "api-key"])
@@ -182,8 +182,8 @@ def test_config_unset_api_key(runner):
 
 
 def test_config_unset_embedding_model_resets_vector_size(runner):
-    from codebase_mcp.cli import main
-    from codebase_mcp.settings import get_settings
+    from yacodebase_mcp.cli import main
+    from yacodebase_mcp.settings import get_settings
 
     runner.invoke(main, ["config", "set", "embedding-model", "text-embedding-3-large"])
     assert get_settings().vector_size == 3072

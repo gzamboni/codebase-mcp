@@ -1,6 +1,6 @@
 import pytest
 
-from codebase_mcp.knowledge import (
+from yacodebase_mcp.knowledge import (
     add_decision,
     add_note,
     get_notes,
@@ -11,7 +11,7 @@ from codebase_mcp.knowledge import (
 
 @pytest.fixture(autouse=True)
 def isolated_data_dir(tmp_path, monkeypatch):
-    monkeypatch.setenv("CODEBASE_MCP_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("YACODEBASE_MCP_DATA_DIR", str(tmp_path))
 
 
 def test_add_and_search_decision():

@@ -5,11 +5,11 @@ import pytest
 
 @pytest.fixture(autouse=True)
 def isolated_data_dir(tmp_path, monkeypatch):
-    monkeypatch.setenv("CODEBASE_MCP_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("YACODEBASE_MCP_DATA_DIR", str(tmp_path))
 
 
 def test_get_settings_returns_defaults_when_no_file():
-    from codebase_mcp.settings import get_settings
+    from yacodebase_mcp.settings import get_settings
 
     s = get_settings()
     assert s.embedding_model == "text-embedding-3-small"
@@ -19,7 +19,7 @@ def test_get_settings_returns_defaults_when_no_file():
 
 
 def test_save_and_load_round_trip():
-    from codebase_mcp.settings import Settings, get_settings, save_settings
+    from yacodebase_mcp.settings import Settings, get_settings, save_settings
 
     original = Settings(
         embedding_model="text-embedding-3-large",
@@ -36,7 +36,7 @@ def test_save_and_load_round_trip():
 
 
 def test_get_settings_ignores_unknown_fields():
-    from codebase_mcp.settings import Settings, _settings_path, get_settings, save_settings
+    from yacodebase_mcp.settings import Settings, _settings_path, get_settings, save_settings
 
     save_settings(Settings(embedding_model="text-embedding-3-large", vector_size=3072))
     # inject an unknown key directly into the file
@@ -51,7 +51,7 @@ def test_get_settings_ignores_unknown_fields():
 
 
 def test_save_settings_omits_none_fields(tmp_path):
-    from codebase_mcp.settings import Settings, save_settings
+    from yacodebase_mcp.settings import Settings, save_settings
 
     save_settings(Settings(api_key=None, api_base=None))
     data = json.loads((tmp_path / "settings.json").read_text())
@@ -60,7 +60,7 @@ def test_save_settings_omits_none_fields(tmp_path):
 
 
 def test_known_models_table():
-    from codebase_mcp.settings import KNOWN_MODELS
+    from yacodebase_mcp.settings import KNOWN_MODELS
 
     assert KNOWN_MODELS["text-embedding-3-small"] == 1536
     assert KNOWN_MODELS["text-embedding-3-large"] == 3072

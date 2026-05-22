@@ -1,6 +1,6 @@
 import pytest
 
-from codebase_mcp import ast_chunker
+from yacodebase_mcp import ast_chunker
 
 
 @pytest.fixture(autouse=True)
@@ -100,7 +100,7 @@ resource "aws_instance" "web" {
 
 
 def test_python_extracts_functions():
-    from codebase_mcp.ast_chunker import chunk_file_ast
+    from yacodebase_mcp.ast_chunker import chunk_file_ast
 
     chunks = chunk_file_ast(PYTHON_FUNCTIONS, "foo.py", "/repo")
     assert chunks is not None
@@ -111,7 +111,7 @@ def test_python_extracts_functions():
 
 
 def test_python_extracts_decorated():
-    from codebase_mcp.ast_chunker import chunk_file_ast
+    from yacodebase_mcp.ast_chunker import chunk_file_ast
 
     chunks = chunk_file_ast(PYTHON_DECORATED, "foo.py", "/repo")
     assert chunks is not None
@@ -124,7 +124,7 @@ def test_python_extracts_decorated():
 
 
 def test_typescript_extracts_methods():
-    from codebase_mcp.ast_chunker import chunk_file_ast
+    from yacodebase_mcp.ast_chunker import chunk_file_ast
 
     chunks = chunk_file_ast(TYPESCRIPT_CLASS, "svc.ts", "/repo")
     assert chunks is not None
@@ -137,7 +137,7 @@ def test_typescript_extracts_methods():
 
 
 def test_go_extracts_functions():
-    from codebase_mcp.ast_chunker import chunk_file_ast
+    from yacodebase_mcp.ast_chunker import chunk_file_ast
 
     chunks = chunk_file_ast(GO_FUNCTIONS, "math.go", "/repo")
     assert chunks is not None
@@ -148,7 +148,7 @@ def test_go_extracts_functions():
 
 
 def test_rust_extracts_functions():
-    from codebase_mcp.ast_chunker import chunk_file_ast
+    from yacodebase_mcp.ast_chunker import chunk_file_ast
 
     chunks = chunk_file_ast(RUST_FUNCTIONS, "lib.rs", "/repo")
     assert chunks is not None
@@ -159,7 +159,7 @@ def test_rust_extracts_functions():
 
 
 def test_java_extracts_methods():
-    from codebase_mcp.ast_chunker import chunk_file_ast
+    from yacodebase_mcp.ast_chunker import chunk_file_ast
 
     chunks = chunk_file_ast(JAVA_CLASS, "MathUtils.java", "/repo")
     assert chunks is not None
@@ -170,7 +170,7 @@ def test_java_extracts_methods():
 
 
 def test_terraform_extracts_blocks():
-    from codebase_mcp.ast_chunker import chunk_file_ast
+    from yacodebase_mcp.ast_chunker import chunk_file_ast
 
     chunks = chunk_file_ast(TERRAFORM_RESOURCES, "main.tf", "/repo")
     assert chunks is not None
@@ -181,21 +181,21 @@ def test_terraform_extracts_blocks():
 
 
 def test_unsupported_ext_returns_none():
-    from codebase_mcp.ast_chunker import chunk_file_ast
+    from yacodebase_mcp.ast_chunker import chunk_file_ast
 
     result = chunk_file_ast("key: value\n", "config.yaml", "/repo")
     assert result is None
 
 
 def test_no_semantic_nodes_returns_none():
-    from codebase_mcp.ast_chunker import chunk_file_ast
+    from yacodebase_mcp.ast_chunker import chunk_file_ast
 
     result = chunk_file_ast(PYTHON_ONLY_IMPORTS, "imports.py", "/repo")
     assert result is None
 
 
 def test_chunk_metadata():
-    from codebase_mcp.ast_chunker import chunk_file_ast
+    from yacodebase_mcp.ast_chunker import chunk_file_ast
 
     chunks = chunk_file_ast(PYTHON_FUNCTIONS, "src/foo.py", "/myrepo")
     assert chunks is not None
@@ -210,7 +210,7 @@ def test_chunk_metadata():
 
 
 def test_chunk_file_falls_back_to_lines():
-    from codebase_mcp.indexer import chunk_file
+    from yacodebase_mcp.indexer import chunk_file
 
     content = "key: value\nanother: line\n"
     chunks = chunk_file(content, "config.yaml", "/repo")
@@ -219,7 +219,7 @@ def test_chunk_file_falls_back_to_lines():
 
 
 def test_chunk_has_symbol_name():
-    from codebase_mcp.ast_chunker import chunk_file_ast
+    from yacodebase_mcp.ast_chunker import chunk_file_ast
 
     content = "def my_function(x):\n    return x + 1\n"
     chunks = chunk_file_ast(content, "foo.py", "/repo")
@@ -231,7 +231,7 @@ def test_chunk_has_symbol_name():
 def test_chunk_symbol_name_none_for_anon():
     # HCL block nodes may not always have an identifier child — symbol_name can be None
     # But for Python functions it must always be set
-    from codebase_mcp.ast_chunker import chunk_file_ast
+    from yacodebase_mcp.ast_chunker import chunk_file_ast
 
     content = "def alpha():\n    pass\ndef beta():\n    pass\n"
     chunks = chunk_file_ast(content, "foo.py", "/repo")
