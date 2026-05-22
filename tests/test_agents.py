@@ -26,7 +26,7 @@ def test_install_creates_config(agent_config_dir):
     assert result == "installed"
     data = json.loads(agent.config_path().read_text())
     assert MCP_SERVER_NAME in data["mcpServers"]
-    assert data["mcpServers"][MCP_SERVER_NAME]["command"] == "yacodebase-mcp"
+    assert data["mcpServers"][MCP_SERVER_NAME]["command"].endswith("yacodebase-mcp")
     assert data["mcpServers"][MCP_SERVER_NAME]["args"] == ["serve"]
 
 
@@ -69,7 +69,7 @@ def test_vscode_format(agent_config_dir):
     data = json.loads(agent.config_path().read_text())
     entry = data["mcp"]["servers"][MCP_SERVER_NAME]
     assert entry["type"] == "stdio"
-    assert entry["command"] == "yacodebase-mcp"
+    assert entry["command"].endswith("yacodebase-mcp")
 
 
 def test_zed_format(agent_config_dir):
@@ -79,7 +79,7 @@ def test_zed_format(agent_config_dir):
     install_agent(agent)
     data = json.loads(agent.config_path().read_text())
     entry = data["context_servers"][MCP_SERVER_NAME]
-    assert entry["command"]["path"] == "yacodebase-mcp"
+    assert entry["command"]["path"].endswith("yacodebase-mcp")
     assert entry["command"]["args"] == ["serve"]
 
 
@@ -106,7 +106,7 @@ def test_codex_format(agent_config_dir):
 
     data = tomllib.loads(agent.config_path().read_bytes().decode("utf-8"))
     entry = data["mcp_servers"][MCP_SERVER_NAME]
-    assert entry["command"] == "yacodebase-mcp"
+    assert entry["command"].endswith("yacodebase-mcp")
     assert entry["args"] == ["serve"]
 
 
@@ -115,3 +115,84 @@ def test_all_agents_present():
 
     expected = {"claude-code", "cursor", "windsurf", "copilot", "zed", "opencode", "codex"}
     assert set(AGENTS.keys()) == expected
+
+
+# ── inject tests ──────────────────────────────────────────────────────────────
+
+
+def test_inject_creates_file(tmp_path):
+    from yacodebase_mcp.agents import INJECT_TARGETS
+
+    target = INJECT_TARGETS["claude-code"]
+    result = target.inject(tmp_path)
+    assert result == "injected"
+    assert target.instructions_path(tmp_path).exists()
+    assert "search_codebase" in target.instructions_path(tmp_path).read_text()
+
+
+def test_inject_idempotent(tmp_path):
+    from yacodebase_mcp.agents import INJECT_TARGETS
+
+    target = INJECT_TARGETS["claude-code"]
+    target.inject(tmp_path)
+    result = target.inject(tmp_path)
+    assert result == "already"
+
+
+def test_inject_appends_to_existing(tmp_path):
+    from yacodebase_mcp.agents import INJECT_TARGETS
+
+    target = INJECT_TARGETS["claude-code"]
+    p = target.instructions_path(tmp_path)
+    p.write_text("# My project\n\nExisting content.\n")
+    target.inject(tmp_path)
+    text = p.read_text()
+    assert "Existing content." in text
+    assert "search_codebase" in text
+
+
+def test_inject_dry_run_no_write(tmp_path):
+    from yacodebase_mcp.agents import INJECT_TARGETS
+
+    target = INJECT_TARGETS["claude-code"]
+    result = target.inject(tmp_path, dry_run=True)
+    assert result == "dry_run"
+    assert not target.instructions_path(tmp_path).exists()
+
+
+def test_eject_removes_block(tmp_path):
+    from yacodebase_mcp.agents import INJECT_TARGETS
+
+    target = INJECT_TARGETS["claude-code"]
+    target.inject(tmp_path)
+    result = target.eject(tmp_path)
+    assert result == "ejected"
+    assert not target.is_injected(tmp_path)
+
+
+def test_eject_preserves_surrounding_content(tmp_path):
+    from yacodebase_mcp.agents import INJECT_TARGETS
+
+    target = INJECT_TARGETS["claude-code"]
+    p = target.instructions_path(tmp_path)
+    p.write_text("# My project\n\nExisting content.\n")
+    target.inject(tmp_path)
+    target.eject(tmp_path)
+    text = p.read_text()
+    assert "Existing content." in text
+    assert "search_codebase" not in text
+
+
+def test_eject_not_found(tmp_path):
+    from yacodebase_mcp.agents import INJECT_TARGETS
+
+    target = INJECT_TARGETS["claude-code"]
+    result = target.eject(tmp_path)
+    assert result == "not_found"
+
+
+def test_all_inject_targets_present():
+    from yacodebase_mcp.agents import INJECT_TARGETS
+
+    expected = {"claude-code", "cursor", "copilot", "codex"}
+    assert set(INJECT_TARGETS.keys()) == expected

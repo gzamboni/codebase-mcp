@@ -29,6 +29,9 @@ uv sync
 ## CLI
 
 ```bash
+# Show version
+yacodebase-mcp --version
+
 # Index a repo (fails if already indexed)
 yacodebase-mcp index ~/Code/myproject
 
@@ -78,15 +81,103 @@ yacodebase-mcp config unset api-base
 
 Default: `text-embedding-3-small`.
 
-## Claude Code config
+## Agent installation
 
-Add to `~/.claude/settings.json`:
+Install the MCP server config into your dev agent's global settings with a single command. The installer resolves the absolute path to the binary so it loads regardless of the agent's `PATH`.
+
+```bash
+# Install into a specific agent
+yacodebase-mcp install claude-code
+yacodebase-mcp install cursor
+yacodebase-mcp install windsurf
+yacodebase-mcp install copilot        # GitHub Copilot (VS Code)
+yacodebase-mcp install zed
+yacodebase-mcp install opencode
+yacodebase-mcp install codex          # OpenAI Codex CLI
+
+# Install into all supported agents at once
+yacodebase-mcp install all
+
+# Preview changes without writing
+yacodebase-mcp install claude-code --dry-run
+
+# Check installation status
+yacodebase-mcp install status
+```
+
+Config paths per agent and OS:
+
+| Agent | macOS | Linux | Windows |
+|---|---|---|---|
+| Claude Code | `~/.claude/settings.json` | same | same |
+| Cursor | `~/.cursor/mcp.json` | same | same |
+| Windsurf | `~/.codeium/windsurf/mcp_config.json` | same | same |
+| Copilot (VS Code) | `~/Library/Application Support/Code/User/settings.json` | `~/.config/Code/User/settings.json` | `%APPDATA%\Code\User\settings.json` |
+| Zed | `~/.config/zed/settings.json` | same | `%APPDATA%\Zed\settings.json` |
+| OpenCode | `~/.config/opencode/config.json` | same | `%APPDATA%\opencode\config.json` |
+| Codex CLI | `~/.codex/config.toml` | same | same |
+
+## Inject agent instructions (ensure always used)
+
+Even with the MCP server installed globally, agents need explicit guidance to use `search_codebase` in a specific repo. The `inject` command writes instruction blocks into agent rule files inside the repo itself.
+
+```bash
+# Inject instructions for all agents into current repo
+yacodebase-mcp inject run
+
+# Inject for specific agents only
+yacodebase-mcp inject run ~/Code/myproject --agent claude-code --agent cursor
+
+# Preview without writing
+yacodebase-mcp inject run --dry-run
+
+# Remove injected instructions
+yacodebase-mcp inject eject
+
+# Check injection status
+yacodebase-mcp inject status
+```
+
+Files written per agent:
+
+| Agent | File |
+|---|---|
+| Claude Code | `CLAUDE.md` |
+| Cursor | `.cursor/rules/codebase-search.mdc` |
+| GitHub Copilot | `.github/copilot-instructions.md` |
+| Codex CLI | `.codex/instructions.md` |
+
+The injected block is idempotent (fenced with marker comments) and appends to existing content. `eject` removes only the injected block, leaving surrounding content intact.
+
+**Recommended workflow after indexing:**
+
+```bash
+yacodebase-mcp index ~/Code/myproject
+yacodebase-mcp inject run ~/Code/myproject
+```
+
+## Shell completions
+
+```bash
+# bash — add to ~/.bashrc
+source <(yacodebase-mcp completion bash)
+
+# zsh — add to ~/.zshrc
+source <(yacodebase-mcp completion zsh)
+
+# fish — add to ~/.config/fish/config.fish
+yacodebase-mcp completion fish | source
+```
+
+## Manual Claude Code config
+
+Add to `~/.claude/settings.json` (or use `yacodebase-mcp install claude-code`):
 
 ```json
 {
   "mcpServers": {
     "codebase-search": {
-      "command": "yacodebase-mcp",
+      "command": "/path/to/yacodebase-mcp",
       "args": ["serve"],
       "env": { "OPENAI_API_KEY": "sk-..." }
     }

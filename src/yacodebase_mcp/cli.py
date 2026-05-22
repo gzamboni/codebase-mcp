@@ -13,6 +13,7 @@ console = Console()
 
 
 @click.group()
+@click.version_option(package_name="yacodebase-mcp")
 def main():
     """Codebase vector search — index repos, search via MCP."""
     import sys
@@ -317,6 +318,70 @@ def install_status() -> None:
 
 
 @main.group()
+def inject():
+    """Inject/eject agent instruction files so agents always use codebase-search."""
+
+
+@inject.command("run")
+@click.argument("repo_path", default=".", type=click.Path(exists=True, file_okay=False))
+@click.option("--agent", "agents", multiple=True, help="Target agent(s). Repeatable. Default: all.")
+@click.option("--dry-run", is_flag=True, help="Print changes without writing.")
+def inject_run(repo_path: str, agents: tuple[str, ...], dry_run: bool) -> None:
+    """Inject codebase-search instructions into agent rule files in REPO_PATH."""
+    from .agents import INJECT_TARGETS
+
+    repo = Path(repo_path).resolve()
+    targets = {k: v for k, v in INJECT_TARGETS.items() if k in agents} if agents else INJECT_TARGETS
+    for name, target in targets.items():
+        status = target.inject(repo, dry_run=dry_run)
+        p = str(target.instructions_path(repo))
+        if status == "already":
+            console.print(f"[yellow]{name}: already injected ({p})[/yellow]")
+        elif status == "dry_run":
+            console.print(f"[cyan]{name}: would write to {p}[/cyan]")
+        else:
+            console.print(f"[green]{name}: injected ({p})[/green]")
+
+
+@inject.command("eject")
+@click.argument("repo_path", default=".", type=click.Path(exists=True, file_okay=False))
+@click.option("--agent", "agents", multiple=True, help="Target agent(s). Repeatable. Default: all.")
+@click.option("--dry-run", is_flag=True, help="Print changes without writing.")
+def inject_eject(repo_path: str, agents: tuple[str, ...], dry_run: bool) -> None:
+    """Remove injected codebase-search instructions from agent rule files in REPO_PATH."""
+    from .agents import INJECT_TARGETS
+
+    repo = Path(repo_path).resolve()
+    targets = {k: v for k, v in INJECT_TARGETS.items() if k in agents} if agents else INJECT_TARGETS
+    for name, target in targets.items():
+        status = target.eject(repo, dry_run=dry_run)
+        p = str(target.instructions_path(repo))
+        if status == "not_found":
+            console.print(f"[dim]{name}: not injected[/dim]")
+        elif status == "dry_run":
+            console.print(f"[cyan]{name}: would remove from {p}[/cyan]")
+        else:
+            console.print(f"[green]{name}: ejected ({p})[/green]")
+
+
+@inject.command("status")
+@click.argument("repo_path", default=".", type=click.Path(exists=True, file_okay=False))
+def inject_status(repo_path: str) -> None:
+    """Show injection status for all agents in REPO_PATH."""
+    from .agents import INJECT_TARGETS
+
+    repo = Path(repo_path).resolve()
+    table = Table(title=f"Inject status — {repo}")
+    table.add_column("Agent")
+    table.add_column("File")
+    table.add_column("Injected")
+    for name, target in INJECT_TARGETS.items():
+        injected = "[green]yes[/green]" if target.is_injected(repo) else "[red]no[/red]"
+        table.add_row(target.label, str(target.instructions_path(repo)), injected)
+    console.print(table)
+
+
+@main.group()
 def hook():
     """Manage post-commit git hooks for automatic reindex."""
 
@@ -394,3 +459,21 @@ def hook_status_cmd(repo_path: str | None) -> None:
 
     wide_console = Console(width=10000)
     wide_console.print(table)
+
+
+@main.command("completion")
+@click.argument("shell", type=click.Choice(["bash", "zsh", "fish"]))
+def completion(shell: str) -> None:
+    """Print shell completion script. Source it to enable tab completion.
+
+    \b
+    bash:  source <(yacodebase-mcp completion bash)
+    zsh:   source <(yacodebase-mcp completion zsh)
+    fish:  yacodebase-mcp completion fish | source
+    """
+    from click.shell_completion import BashComplete, FishComplete, ZshComplete
+
+    cls = {"bash": BashComplete, "zsh": ZshComplete, "fish": FishComplete}[shell]
+    ctx = main.make_context("yacodebase-mcp", [], resilient_parsing=True)
+    comp = cls(main, ctx, "yacodebase-mcp", "_YACODEBASE_MCP_COMPLETE")
+    click.echo(comp.source(), nl=False)

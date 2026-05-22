@@ -13,6 +13,14 @@ MCP_SERVER_CMD = "yacodebase-mcp"
 MCP_SERVER_ARGS: tuple[str, ...] = ("serve",)
 
 
+def _server_cmd() -> str:
+    """Return absolute path to yacodebase-mcp binary, falling back to bare name."""
+    import shutil
+
+    resolved = shutil.which(MCP_SERVER_CMD)
+    return resolved if resolved else MCP_SERVER_CMD
+
+
 @dataclass
 class Agent:
     name: str
@@ -65,7 +73,7 @@ def _appdata() -> Path:
 # ── JSON agent helpers ────────────────────────────────────────────────────────
 
 def _std_entry() -> dict:
-    return {"command": MCP_SERVER_CMD, "args": list(MCP_SERVER_ARGS)}
+    return {"command": _server_cmd(), "args": list(MCP_SERVER_ARGS)}
 
 
 def _merge_mcpservers(data: dict) -> dict:
@@ -80,7 +88,7 @@ def _check_mcpservers(data: dict) -> bool:
 
 def _merge_vscode(data: dict) -> dict:
     result = copy.deepcopy(data)
-    entry = {"type": "stdio", "command": MCP_SERVER_CMD, "args": list(MCP_SERVER_ARGS)}
+    entry = {"type": "stdio", "command": _server_cmd(), "args": list(MCP_SERVER_ARGS)}
     result.setdefault("mcp", {}).setdefault("servers", {})[MCP_SERVER_NAME] = entry
     return result
 
@@ -92,7 +100,7 @@ def _check_vscode(data: dict) -> bool:
 def _merge_zed(data: dict) -> dict:
     result = copy.deepcopy(data)
     result.setdefault("context_servers", {})[MCP_SERVER_NAME] = {
-        "command": {"path": MCP_SERVER_CMD, "args": list(MCP_SERVER_ARGS)}
+        "command": {"path": _server_cmd(), "args": list(MCP_SERVER_ARGS)}
     }
     return result
 
@@ -106,7 +114,7 @@ def _check_zed(data: dict) -> bool:
 def _merge_codex(data: dict) -> dict:
     result = copy.deepcopy(data)
     result.setdefault("mcp_servers", {})[MCP_SERVER_NAME] = {
-        "command": MCP_SERVER_CMD,
+        "command": _server_cmd(),
         "args": list(MCP_SERVER_ARGS),
     }
     return result
@@ -190,6 +198,92 @@ AGENTS: dict[str, Agent] = {
         _merge_fn=_merge_codex,
         _check_fn=_check_codex,
         _format="toml",
+    ),
+}
+
+
+_INJECT_MARKER_START = "<!-- yacodebase-mcp:start -->"
+_INJECT_MARKER_END = "<!-- yacodebase-mcp:end -->"
+
+_INJECT_BLOCK = """\
+<!-- yacodebase-mcp:start -->
+## Codebase Search (yacodebase-mcp)
+
+This repository is indexed with yacodebase-mcp (semantic vector search over code).
+
+- Use the `search_codebase` MCP tool for semantic code discovery — prefer it over grep/find.
+- At session start, call `session_bootstrap` to confirm the index is active and get a summary.
+- Use `search_codebase` when exploring unfamiliar code, finding usages, or locating implementations.
+<!-- yacodebase-mcp:end -->"""
+
+
+@dataclass
+class InjectTarget:
+    name: str
+    label: str
+    _get_path: Callable[[Path], Path] = field(repr=False)
+
+    def instructions_path(self, repo: Path) -> Path:
+        return self._get_path(repo)
+
+    def is_injected(self, repo: Path) -> bool:
+        p = self.instructions_path(repo)
+        return p.exists() and _INJECT_MARKER_START in p.read_text(encoding="utf-8")
+
+    def inject(self, repo: Path, dry_run: bool = False) -> str:
+        """Inject instructions block. Returns 'already', 'dry_run', or 'injected'."""
+        if self.is_injected(repo):
+            return "already"
+        p = self.instructions_path(repo)
+        if dry_run:
+            return "dry_run"
+        p.parent.mkdir(parents=True, exist_ok=True)
+        existing = p.read_text(encoding="utf-8") if p.exists() else ""
+        separator = "\n\n" if existing and not existing.endswith("\n\n") else ""
+        p.write_text(existing + separator + _INJECT_BLOCK + "\n", encoding="utf-8")
+        return "injected"
+
+    def eject(self, repo: Path, dry_run: bool = False) -> str:
+        """Remove injected block. Returns 'not_found', 'dry_run', or 'ejected'."""
+        p = self.instructions_path(repo)
+        if not p.exists() or _INJECT_MARKER_START not in p.read_text(encoding="utf-8"):
+            return "not_found"
+        if dry_run:
+            return "dry_run"
+        text = p.read_text(encoding="utf-8")
+        start = text.find(_INJECT_MARKER_START)
+        end = text.find(_INJECT_MARKER_END, start)
+        if end == -1:
+            return "not_found"
+        block = text[start : end + len(_INJECT_MARKER_END)]
+        cleaned = text.replace("\n\n" + block, "").replace(block, "").strip()
+        if cleaned:
+            p.write_text(cleaned + "\n", encoding="utf-8")
+        else:
+            p.unlink()
+        return "ejected"
+
+
+INJECT_TARGETS: dict[str, InjectTarget] = {
+    "claude-code": InjectTarget(
+        name="claude-code",
+        label="Claude Code (CLAUDE.md)",
+        _get_path=lambda repo: repo / "CLAUDE.md",
+    ),
+    "cursor": InjectTarget(
+        name="cursor",
+        label="Cursor (.cursor/rules/codebase-search.mdc)",
+        _get_path=lambda repo: repo / ".cursor" / "rules" / "codebase-search.mdc",
+    ),
+    "copilot": InjectTarget(
+        name="copilot",
+        label="GitHub Copilot (.github/copilot-instructions.md)",
+        _get_path=lambda repo: repo / ".github" / "copilot-instructions.md",
+    ),
+    "codex": InjectTarget(
+        name="codex",
+        label="OpenAI Codex CLI (.codex/instructions.md)",
+        _get_path=lambda repo: repo / ".codex" / "instructions.md",
     ),
 }
 
