@@ -9,7 +9,14 @@ from qdrant_client.models import Distance, VectorParams
 
 
 def _data_dir() -> Path:
-    return Path(os.environ.get("CODEBASE_MCP_DATA_DIR", str(Path.home() / ".codebase-mcp")))
+    override = os.environ.get("CODEBASE_MCP_DATA_DIR")
+    if override:
+        return Path(override)
+    old = Path.home() / ".codebase-mcp"
+    new = Path.home() / ".yacodebase-mcp"
+    if old.exists() and not new.exists():
+        old.rename(new)
+    return new
 
 
 def _config_path() -> Path:

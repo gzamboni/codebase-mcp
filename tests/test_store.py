@@ -72,3 +72,44 @@ def test_ensure_collection_replaces_existing(tmp_path):
     ensure_collection(client, repo_id, vector_size=1536)
     results = client.scroll(collection_name=repo_id, limit=10)[0]
     assert len(results) == 0
+
+
+def test_data_dir_migrates_old_to_new(tmp_path, monkeypatch):
+    from pathlib import Path
+
+    monkeypatch.delenv("CODEBASE_MCP_DATA_DIR", raising=False)
+    monkeypatch.setattr(Path, "home", lambda: tmp_path)
+
+    old = tmp_path / ".codebase-mcp"
+    old.mkdir()
+    (old / "config.json").write_text("{}")
+
+    from codebase_mcp.store import _data_dir
+
+    result = _data_dir()
+    assert result == tmp_path / ".yacodebase-mcp"
+    assert (result / "config.json").exists()
+    assert not old.exists()
+
+
+def test_data_dir_no_old_dir(tmp_path, monkeypatch):
+    from pathlib import Path
+
+    monkeypatch.delenv("CODEBASE_MCP_DATA_DIR", raising=False)
+    monkeypatch.setattr(Path, "home", lambda: tmp_path)
+
+    from codebase_mcp.store import _data_dir
+
+    result = _data_dir()
+    assert result == tmp_path / ".yacodebase-mcp"
+
+
+def test_data_dir_env_var_wins(tmp_path, monkeypatch):
+    from pathlib import Path
+
+    custom = str(tmp_path / "custom-data")
+    monkeypatch.setenv("CODEBASE_MCP_DATA_DIR", custom)
+
+    from codebase_mcp.store import _data_dir
+
+    assert _data_dir() == Path(custom)
