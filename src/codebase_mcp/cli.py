@@ -1,7 +1,7 @@
+import json
 from pathlib import Path
 
 import click
-import json
 from rich.console import Console
 from rich.table import Table
 
@@ -198,7 +198,11 @@ def _do_install(agent_name: str, dry_run: bool) -> None:
     from .agents import AGENTS, install_agent
 
     agent = AGENTS[agent_name]
-    status = install_agent(agent, dry_run=dry_run)
+    try:
+        status = install_agent(agent, dry_run=dry_run)
+    except OSError as e:
+        console.print(f"[red]{e}[/red]")
+        raise SystemExit(1)
     path = str(agent.config_path())
     if status == "already":
         console.print(f"[yellow]Already configured: {path}[/yellow]")
@@ -219,35 +223,35 @@ def install_claude_code(dry_run: bool) -> None:
 
 
 @install.command("cursor")
-@click.option("--dry-run", is_flag=True)
+@click.option("--dry-run", is_flag=True, help="Print changes without writing.")
 def install_cursor(dry_run: bool) -> None:
     """Install MCP config for Cursor."""
     _do_install("cursor", dry_run)
 
 
 @install.command("windsurf")
-@click.option("--dry-run", is_flag=True)
+@click.option("--dry-run", is_flag=True, help="Print changes without writing.")
 def install_windsurf(dry_run: bool) -> None:
     """Install MCP config for Windsurf."""
     _do_install("windsurf", dry_run)
 
 
 @install.command("copilot")
-@click.option("--dry-run", is_flag=True)
+@click.option("--dry-run", is_flag=True, help="Print changes without writing.")
 def install_copilot(dry_run: bool) -> None:
     """Install MCP config for GitHub Copilot (VS Code)."""
     _do_install("copilot", dry_run)
 
 
 @install.command("zed")
-@click.option("--dry-run", is_flag=True)
+@click.option("--dry-run", is_flag=True, help="Print changes without writing.")
 def install_zed(dry_run: bool) -> None:
     """Install MCP config for Zed."""
     _do_install("zed", dry_run)
 
 
 @install.command("opencode")
-@click.option("--dry-run", is_flag=True)
+@click.option("--dry-run", is_flag=True, help="Print changes without writing.")
 def install_opencode(dry_run: bool) -> None:
     """Install MCP config for OpenCode."""
     _do_install("opencode", dry_run)
@@ -260,7 +264,11 @@ def install_all(dry_run: bool) -> None:
     from .agents import AGENTS, install_agent
 
     for name, agent in AGENTS.items():
-        status = install_agent(agent, dry_run=dry_run)
+        try:
+            status = install_agent(agent, dry_run=dry_run)
+        except OSError as e:
+            console.print(f"[red]{name}: error — {e}[/red]")
+            continue
         path = str(agent.config_path())
         if status == "already":
             console.print(f"[yellow]{name}: already configured ({path})[/yellow]")
@@ -281,7 +289,11 @@ def install_status() -> None:
     table.add_column("Installed")
 
     for agent in AGENTS.values():
-        installed = "[green]yes[/green]" if agent.is_installed() else "[red]no[/red]"
+        try:
+            flag = agent.is_installed()
+            installed = "[green]yes[/green]" if flag else "[red]no[/red]"
+        except (json.JSONDecodeError, OSError):
+            installed = "[yellow]parse error[/yellow]"
         table.add_row(agent.label, str(agent.config_path()), installed)
 
     wide_console = Console(width=10000)
