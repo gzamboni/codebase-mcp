@@ -266,6 +266,13 @@ def install_opencode(dry_run: bool) -> None:
     _do_install("opencode", dry_run)
 
 
+@install.command("codex")
+@click.option("--dry-run", is_flag=True, help="Print changes without writing.")
+def install_codex(dry_run: bool) -> None:
+    """Install MCP config for OpenAI Codex CLI (~/.codex/config.toml)."""
+    _do_install("codex", dry_run)
+
+
 @install.command("all")
 @click.option("--dry-run", is_flag=True, help="Print changes without writing.")
 def install_all(dry_run: bool) -> None:

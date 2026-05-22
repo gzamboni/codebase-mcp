@@ -20,6 +20,7 @@ class Agent:
     _get_path: Callable[[], Path] = field(repr=False)
     _merge_fn: Callable[[dict], dict] = field(repr=False)
     _check_fn: Callable[[dict], bool] = field(repr=False)
+    _format: str = "json"
 
     def config_path(self) -> Path:
         return self._get_path()
@@ -28,13 +29,22 @@ class Agent:
         p = self.config_path()
         if not p.exists():
             return {}
-        return json.loads(p.read_text())
+        if self._format == "toml":
+            import tomllib
+
+            return tomllib.loads(p.read_text(encoding="utf-8"))
+        return json.loads(p.read_text(encoding="utf-8"))
 
     def write_config(self, data: dict) -> None:
         p = self.config_path()
         try:
             p.parent.mkdir(parents=True, exist_ok=True)
-            p.write_text(json.dumps(data, indent=2) + "\n")
+            if self._format == "toml":
+                import tomli_w
+
+                p.write_text(tomli_w.dumps(data), encoding="utf-8")
+            else:
+                p.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
         except OSError as e:
             raise OSError(f"Cannot write {self.name} config to {p}: {e}") from e
 
@@ -46,6 +56,13 @@ class Agent:
     def merge(self, data: dict) -> dict:
         return self._merge_fn(data)
 
+
+def _appdata() -> Path:
+    """Windows %APPDATA% or fallback."""
+    return Path(os.environ.get("APPDATA") or str(Path.home() / "AppData" / "Roaming"))
+
+
+# ── JSON agent helpers ────────────────────────────────────────────────────────
 
 def _std_entry() -> dict:
     return {"command": MCP_SERVER_CMD, "args": list(MCP_SERVER_ARGS)}
@@ -84,14 +101,44 @@ def _check_zed(data: dict) -> bool:
     return MCP_SERVER_NAME in data.get("context_servers", {})
 
 
+# ── TOML agent helpers (Codex CLI) ────────────────────────────────────────────
+
+def _merge_codex(data: dict) -> dict:
+    result = copy.deepcopy(data)
+    result.setdefault("mcp_servers", {})[MCP_SERVER_NAME] = {
+        "command": MCP_SERVER_CMD,
+        "args": list(MCP_SERVER_ARGS),
+    }
+    return result
+
+
+def _check_codex(data: dict) -> bool:
+    return MCP_SERVER_NAME in data.get("mcp_servers", {})
+
+
+# ── OS-aware path functions ───────────────────────────────────────────────────
+
 def _copilot_path() -> Path:
     if sys.platform == "darwin":
         return Path.home() / "Library" / "Application Support" / "Code" / "User" / "settings.json"
     if sys.platform == "win32":
-        appdata = os.environ.get("APPDATA") or str(Path.home() / "AppData" / "Roaming")
-        return Path(appdata) / "Code" / "User" / "settings.json"
+        return _appdata() / "Code" / "User" / "settings.json"
     return Path.home() / ".config" / "Code" / "User" / "settings.json"
 
+
+def _zed_path() -> Path:
+    if sys.platform == "win32":
+        return _appdata() / "Zed" / "settings.json"
+    return Path.home() / ".config" / "zed" / "settings.json"
+
+
+def _opencode_path() -> Path:
+    if sys.platform == "win32":
+        return _appdata() / "opencode" / "config.json"
+    return Path.home() / ".config" / "opencode" / "config.json"
+
+
+# ── Agent registry ────────────────────────────────────────────────────────────
 
 AGENTS: dict[str, Agent] = {
     "claude-code": Agent(
@@ -125,16 +172,24 @@ AGENTS: dict[str, Agent] = {
     "zed": Agent(
         name="zed",
         label="Zed",
-        _get_path=lambda: Path.home() / ".config" / "zed" / "settings.json",
+        _get_path=_zed_path,
         _merge_fn=_merge_zed,
         _check_fn=_check_zed,
     ),
     "opencode": Agent(
         name="opencode",
         label="OpenCode",
-        _get_path=lambda: Path.home() / ".config" / "opencode" / "config.json",
+        _get_path=_opencode_path,
         _merge_fn=_merge_mcpservers,
         _check_fn=_check_mcpservers,
+    ),
+    "codex": Agent(
+        name="codex",
+        label="OpenAI Codex CLI",
+        _get_path=lambda: Path.home() / ".codex" / "config.toml",
+        _merge_fn=_merge_codex,
+        _check_fn=_check_codex,
+        _format="toml",
     ),
 }
 

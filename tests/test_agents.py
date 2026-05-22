@@ -97,8 +97,21 @@ def test_is_installed_true_after_install(agent_config_dir):
     assert agent.is_installed() is True
 
 
+def test_codex_format(agent_config_dir):
+    from yacodebase_mcp.agents import AGENTS, MCP_SERVER_NAME, install_agent
+
+    agent = AGENTS["codex"]
+    install_agent(agent)
+    import tomllib
+
+    data = tomllib.loads(agent.config_path().read_bytes().decode("utf-8"))
+    entry = data["mcp_servers"][MCP_SERVER_NAME]
+    assert entry["command"] == "yacodebase-mcp"
+    assert entry["args"] == ["serve"]
+
+
 def test_all_agents_present():
     from yacodebase_mcp.agents import AGENTS
 
-    expected = {"claude-code", "cursor", "windsurf", "copilot", "zed", "opencode"}
+    expected = {"claude-code", "cursor", "windsurf", "copilot", "zed", "opencode", "codex"}
     assert set(AGENTS.keys()) == expected
