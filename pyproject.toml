@@ -33,12 +33,13 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/gzamboni/codebase-mcp"
-Repository = "https://github.com/gzamboni/codebase-mcp"
-Issues = "https://github.com/gzamboni/codebase-mcp/issues"
+Homepage   = "https://github.com/gzamboni/yacodebase-mcp"
+Repository = "https://github.com/gzamboni/yacodebase-mcp"
+Issues     = "https://github.com/gzamboni/yacodebase-mcp/issues"
 
 [project.scripts]
-codebase-mcp = "codebase_mcp.cli:main"
+yacodebase-mcp = "codebase_mcp.cli:main"
+codebase-mcp   = "codebase_mcp.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/codebase_mcp"]

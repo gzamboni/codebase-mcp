@@ -14,6 +14,9 @@ console = Console()
 @click.group()
 def main():
     """Codebase vector search — index repos, search via MCP."""
+    import sys
+    if Path(sys.argv[0]).name == "codebase-mcp":
+        click.echo("Warning: codebase-mcp is deprecated, use yacodebase-mcp", err=True)
 
 
 @main.command()
@@ -47,7 +50,7 @@ def update(repo_path):
 
     abs_path = str(Path(repo_path).resolve())
     if not is_indexed(abs_path):
-        click.echo(f"Not indexed. Run: codebase-mcp index {repo_path}", err=True)
+        click.echo(f"Not indexed. Run: yacodebase-mcp index {repo_path}", err=True)
         raise SystemExit(1)
     count = index_repo_incremental(abs_path)
     if count == 0:

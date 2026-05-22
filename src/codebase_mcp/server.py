@@ -33,7 +33,7 @@ def list_indexed_repos() -> str:
     """List all indexed repositories with chunk count and last indexed time."""
     repos = get_all_repos()
     if not repos:
-        return "No repos indexed. Run: codebase-mcp index /path/to/repo"
+        return "No repos indexed. Run: yacodebase-mcp index /path/to/repo"
     lines = [
         f"- {path}  ({meta['chunk_count']} chunks, indexed {meta['last_indexed']})"
         for path, meta in repos.items()
@@ -53,7 +53,7 @@ def search_symbols(name: str, repo_path: str | None = None) -> str:
 
     config = get_all_repos()
     if not config:
-        return "No repos indexed. Run: codebase-mcp index /path/to/repo"
+        return "No repos indexed. Run: yacodebase-mcp index /path/to/repo"
 
     if repo_path:
         abs_path = str(Path(repo_path).resolve())
@@ -109,7 +109,7 @@ def find_todos(repo_path: str | None = None) -> str:
 
     config = get_all_repos()
     if not config:
-        return "No repos indexed. Run: codebase-mcp index /path/to/repo"
+        return "No repos indexed. Run: yacodebase-mcp index /path/to/repo"
 
     if repo_path:
         abs_path = str(Path(repo_path).resolve())
@@ -178,7 +178,7 @@ def what_changed(repo_path: str | None = None) -> str:
 
     config = get_all_repos()
     if not config:
-        return "No repos indexed. Run: codebase-mcp index /path/to/repo"
+        return "No repos indexed. Run: yacodebase-mcp index /path/to/repo"
 
     if repo_path:
         abs_path = str(Path(repo_path).resolve())
@@ -307,7 +307,7 @@ def session_bootstrap(repo_path: str | None = None) -> str:
 
     config = get_all_repos()
     if not config:
-        return "No repos indexed. Run: codebase-mcp index /path/to/repo"
+        return "No repos indexed. Run: yacodebase-mcp index /path/to/repo"
 
     if repo_path:
         abs_path = str(Path(repo_path).resolve())

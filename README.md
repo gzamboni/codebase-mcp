@@ -1,4 +1,4 @@
-# codebase-mcp
+# yacodebase-mcp
 
 Vector search MCP server for codebases. Index repos locally with AST-aware chunking; let Claude (or any MCP client) search them semantically and query their structure.
 
@@ -17,7 +17,7 @@ pip install yacodebase-mcp
 Or from source:
 
 ```bash
-uv tool install /path/to/codebase-mcp
+uv tool install /path/to/yacodebase-mcp
 ```
 
 For development:
@@ -30,42 +30,42 @@ uv sync
 
 ```bash
 # Index a repo (fails if already indexed)
-codebase-mcp index ~/Code/myproject
+yacodebase-mcp index ~/Code/myproject
 
 # Re-index after changes (replaces existing index)
-codebase-mcp reindex ~/Code/myproject
+yacodebase-mcp reindex ~/Code/myproject
 
 # Incrementally update index (only changed files)
-codebase-mcp update ~/Code/myproject
+yacodebase-mcp update ~/Code/myproject
 
 # List indexed repos with chunk counts
-codebase-mcp list
+yacodebase-mcp list
 
 # Remove a repo from the index
-codebase-mcp remove ~/Code/myproject
+yacodebase-mcp remove ~/Code/myproject
 
 # Start MCP server (stdio, used by Claude Code)
-codebase-mcp serve
+yacodebase-mcp serve
 ```
 
 ### Config commands
 
 ```bash
 # Show current settings
-codebase-mcp config list
+yacodebase-mcp config list
 
 # Set embedding model (known models auto-resolve vector size)
-codebase-mcp config set embedding-model text-embedding-3-large
-codebase-mcp config set embedding-model my-custom-model --vector-size 768
+yacodebase-mcp config set embedding-model text-embedding-3-large
+yacodebase-mcp config set embedding-model my-custom-model --vector-size 768
 
 # Set API credentials
-codebase-mcp config set api-key sk-...
-codebase-mcp config set api-base https://my-provider.com/v1
+yacodebase-mcp config set api-key sk-...
+yacodebase-mcp config set api-base https://my-provider.com/v1
 
 # Revert a setting to default / env var fallback
-codebase-mcp config unset embedding-model
-codebase-mcp config unset api-key
-codebase-mcp config unset api-base
+yacodebase-mcp config unset embedding-model
+yacodebase-mcp config unset api-key
+yacodebase-mcp config unset api-base
 ```
 
 **Known models** (vector size auto-detected):
@@ -86,7 +86,7 @@ Add to `~/.claude/settings.json`:
 {
   "mcpServers": {
     "codebase-search": {
-      "command": "codebase-mcp",
+      "command": "yacodebase-mcp",
       "args": ["serve"],
       "env": { "OPENAI_API_KEY": "sk-..." }
     }
@@ -94,7 +94,7 @@ Add to `~/.claude/settings.json`:
 }
 ```
 
-API key can also be set via `codebase-mcp config set api-key sk-...` (persisted in `~/.codebase-mcp/settings.json`), which takes precedence over the env var.
+API key can also be set via `yacodebase-mcp config set api-key sk-...` (persisted in `~/.codebase-mcp/settings.json`), which takes precedence over the env var.
 
 ## MCP tools
 
@@ -241,16 +241,16 @@ All data lives in `~/.codebase-mcp/`:
   qdrant/          # Qdrant in-process storage (one collection per repo)
 ```
 
-Each repo gets a stable `repo_id` derived from its absolute path (used as Qdrant collection name). Reindexing replaces the collection in-place. Incremental updates (`codebase-mcp update`) use SHA256 hashes to skip unchanged files.
+Each repo gets a stable `repo_id` derived from its absolute path (used as Qdrant collection name). Reindexing replaces the collection in-place. Incremental updates (`yacodebase-mcp update`) use SHA256 hashes to skip unchanged files.
 
 ## OpenAI-compatible providers
 
 Set `api-base` to use any OpenAI-compatible embedding API (e.g. Ollama, vLLM, Azure):
 
 ```bash
-codebase-mcp config set api-base http://localhost:11434/v1
-codebase-mcp config set api-key ollama
-codebase-mcp config set embedding-model nomic-embed-text --vector-size 768
+yacodebase-mcp config set api-base http://localhost:11434/v1
+yacodebase-mcp config set api-key ollama
+yacodebase-mcp config set embedding-model nomic-embed-text --vector-size 768
 ```
 
 After changing the model, reindex all repos (vector dimensions must match).

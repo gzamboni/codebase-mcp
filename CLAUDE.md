@@ -1,4 +1,4 @@
-# codebase-mcp — dev guide
+# yacodebase-mcp — dev guide
 
 ## Setup
 
