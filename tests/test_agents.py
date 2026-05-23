@@ -14,7 +14,7 @@ def agent_config_dir(tmp_path, monkeypatch):
 def test_claude_code_config_path(agent_config_dir):
     from yacodebase_mcp.agents import AGENTS
 
-    expected = agent_config_dir / ".claude" / "settings.json"
+    expected = agent_config_dir / ".claude.json"
     assert AGENTS["claude-code"].config_path() == expected
 
 
@@ -25,9 +25,11 @@ def test_install_creates_config(agent_config_dir):
     result = install_agent(agent)
     assert result == "installed"
     data = json.loads(agent.config_path().read_text())
-    assert MCP_SERVER_NAME in data["mcpServers"]
-    assert data["mcpServers"][MCP_SERVER_NAME]["command"].endswith("yacodebase-mcp")
-    assert data["mcpServers"][MCP_SERVER_NAME]["args"] == ["serve"]
+    entry = data["mcpServers"][MCP_SERVER_NAME]
+    assert entry["command"].endswith("yacodebase-mcp")
+    assert entry["args"] == ["serve"]
+    assert entry["type"] == "stdio"
+    assert entry["env"] == {}
 
 
 def test_install_idempotent(agent_config_dir):
@@ -52,7 +54,6 @@ def test_install_merges_existing_config(agent_config_dir):
     from yacodebase_mcp.agents import AGENTS, MCP_SERVER_NAME, install_agent
 
     agent = AGENTS["claude-code"]
-    agent.config_path().parent.mkdir(parents=True, exist_ok=True)
     agent.config_path().write_text(json.dumps({"other_setting": True}))
 
     install_agent(agent)

@@ -214,7 +214,7 @@ def _do_install(agent_name: str, dry_run: bool) -> None:
     new_data = agent.merge(data)
     if dry_run:
         console.print(f"[bold]Would write to {path}:[/bold]")
-        console.print(json.dumps(new_data, indent=2))
+        console.print(json.dumps(new_data, indent=2), markup=False, highlight=False)
         return
 
     try:

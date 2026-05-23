@@ -82,6 +82,13 @@ def _merge_mcpservers(data: dict) -> dict:
     return result
 
 
+def _merge_claude_json(data: dict) -> dict:
+    result = copy.deepcopy(data)
+    entry = {"type": "stdio", "command": _server_cmd(), "args": list(MCP_SERVER_ARGS), "env": {}}
+    result.setdefault("mcpServers", {})[MCP_SERVER_NAME] = entry
+    return result
+
+
 def _check_mcpservers(data: dict) -> bool:
     return MCP_SERVER_NAME in data.get("mcpServers", {})
 
@@ -152,8 +159,8 @@ AGENTS: dict[str, Agent] = {
     "claude-code": Agent(
         name="claude-code",
         label="Claude Code",
-        _get_path=lambda: Path.home() / ".claude" / "settings.json",
-        _merge_fn=_merge_mcpservers,
+        _get_path=lambda: Path.home() / ".claude.json",
+        _merge_fn=_merge_claude_json,
         _check_fn=_check_mcpservers,
     ),
     "cursor": Agent(

@@ -109,7 +109,7 @@ Config paths per agent and OS:
 
 | Agent | macOS | Linux | Windows |
 |---|---|---|---|
-| Claude Code | `~/.claude/settings.json` | same | same |
+| Claude Code | `~/.claude.json` | same | same |
 | Cursor | `~/.cursor/mcp.json` | same | same |
 | Windsurf | `~/.codeium/windsurf/mcp_config.json` | same | same |
 | Copilot (VS Code) | `~/Library/Application Support/Code/User/settings.json` | `~/.config/Code/User/settings.json` | `%APPDATA%\Code\User\settings.json` |
@@ -171,15 +171,16 @@ yacodebase-mcp completion fish | source
 
 ## Manual Claude Code config
 
-Add to `~/.claude/settings.json` (or use `yacodebase-mcp install claude-code`):
+Add to `~/.claude.json` at the top level (or use `yacodebase-mcp install claude-code`):
 
 ```json
 {
   "mcpServers": {
     "codebase-search": {
+      "type": "stdio",
       "command": "/path/to/yacodebase-mcp",
       "args": ["serve"],
-      "env": { "OPENAI_API_KEY": "sk-..." }
+      "env": {}
     }
   }
 }
