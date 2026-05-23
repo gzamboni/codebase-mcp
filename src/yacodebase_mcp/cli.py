@@ -476,4 +476,9 @@ def completion(shell: str) -> None:
     cls = {"bash": BashComplete, "zsh": ZshComplete, "fish": FishComplete}[shell]
     ctx = main.make_context("yacodebase-mcp", [], resilient_parsing=True)
     comp = cls(main, ctx, "yacodebase-mcp", "_YACODEBASE_MCP_COMPLETE")
-    click.echo(comp.source(), nl=False)
+    source = comp.source()
+    # Click 8.x bug: fish template emits literal \n as string split separator;
+    # fish needs the \t escape notation to split on tab.
+    if shell == "fish":
+        source = source.replace("string split \n ", "string split \\t ")
+    click.echo(source, nl=False)
